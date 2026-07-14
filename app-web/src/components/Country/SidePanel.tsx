@@ -38,20 +38,26 @@ export default function SidePanel({ country, metrics, worldAvgLeisure, onClose, 
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 40, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 28 }}
-          className="pointer-events-auto max-h-[calc(100vh-16rem)] w-[360px] max-w-[90vw] overflow-y-auto rounded-2xl border border-border bg-panel/95 p-5 shadow-2xl backdrop-blur"
+          className="pointer-events-auto max-h-[calc(100vh-16rem)] w-[360px] max-w-[88vw] overflow-y-auto rounded-2xl border border-border bg-panel/90 p-5 shadow-2xl backdrop-blur"
           role="dialog"
           aria-label={`Details for ${name}`}
         >
-          <div className="mb-2 flex items-start justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">{name}</h3>
-              {region && <p className="text-xs text-fg-muted">{region}</p>}
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-accent-warm" aria-hidden />
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-fg-muted">
+                  {showClose ? "The day in numbers" : "The world today"}
+                </span>
+              </div>
+              <h3 className="display text-3xl leading-none">{name}</h3>
+              {region && <p className="mt-0.5 text-xs text-fg-muted">{region}</p>}
             </div>
             {showClose && (
               <button
                 onClick={onClose}
                 aria-label="Close panel"
-                className="rounded-md px-2 py-1 text-fg-muted hover:bg-bg-soft hover:text-fg"
+                className="shrink-0 rounded-md px-2 py-1 text-fg-muted hover:bg-bg-soft hover:text-fg"
               >
                 ✕
               </button>
