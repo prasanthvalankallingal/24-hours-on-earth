@@ -27,7 +27,7 @@ export default function StoryPanel({ title, subtitle, paragraphs, isWorld }: Pro
         <span className="text-[10px] font-semibold uppercase tracking-widest text-fg-muted">
           {isWorld ? "The world today" : "Data story"}
         </span>
-        <span className="ml-auto text-[9px] uppercase tracking-wide text-fg-muted/60">
+        <span className="ml-auto text-[9px] uppercase tracking-wide text-fg-muted">
           auto-generated
         </span>
       </div>

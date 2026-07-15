@@ -11,6 +11,7 @@ import Heartbeat from "@/components/Heartbeat/Heartbeat";
 import Companionship from "@/components/Story/Companionship";
 import AskTheData from "@/components/Ask/AskTheData";
 import { LiveSleepLine } from "@/components/Hero/NarrativeHook";
+import { METRIC_BY_KEY } from "@/lib/types";
 import { computeWorldStats, worldStory, countryStory } from "@/lib/story";
 
 // Client-only: three / react-globe.gl must never load during prerender.
@@ -137,6 +138,32 @@ export default function Home() {
     };
   }, [selected, worldStats]);
 
+  // Focal point — the extreme country for the current metric, so the eye has
+  // somewhere to land. Powers the "what you're looking at" caption.
+  const focus = useMemo(() => {
+    const def = METRIC_BY_KEY[metric];
+    const rows: { name: string; value: number }[] = [];
+    if (metric === "leisure" || metric === "work") {
+      for (const d of timeuse) {
+        const v = metric === "work" ? d.workMin : d.leisureMin;
+        if (typeof v === "number") rows.push({ name: d.country, value: v });
+      }
+      if (metric === "work") {
+        for (const d of working)
+          if (!timeuse.find((t) => t.code === d.code))
+            rows.push({ name: d.country, value: d.workMin });
+      }
+    } else {
+      for (const d of metrics) {
+        const v = d[metric];
+        if (typeof v === "number") rows.push({ name: d.country, value: v });
+      }
+    }
+    if (!rows.length) return null;
+    const hi = rows.reduce((a, b) => (b.value > a.value ? b : a));
+    return { label: def.label.toLowerCase(), name: hi.name, value: def.fmt(hi.value), count: rows.length };
+  }, [metric]);
+
   // Heartbeat uses time-use (work/leisure). If the selected country has it, use
   // that; otherwise fall back to the world-average day.
   const heartbeatCountry =
@@ -149,7 +176,14 @@ export default function Home() {
   return (
     <main className="cosmos relative flex-1">
       {/* HERO */}
-      <section className="relative h-screen w-full overflow-hidden">
+      <section
+        className="relative h-screen w-full overflow-hidden"
+        aria-label={
+          focus
+            ? `Interactive globe of ${focus.count} countries coloured by ${focus.label}. Highest: ${focus.name} at ${focus.value}. Click a country for its full 24-hour breakdown, or scroll for the data stories below.`
+            : "Interactive globe of how the world spends its 24 hours. Scroll for the data stories below."
+        }
+      >
         <div className="absolute inset-0">
           <EarthGlobe
             timeuse={timeuse}
@@ -174,7 +208,7 @@ export default function Home() {
             How the world sleeps, works, and lives.
           </p>
           <div className="mt-4">
-            <LiveSleepLine cities={cities} />
+            <LiveSleepLine cities={cities} metric={metric} metrics={metrics} />
           </div>
         </div>
 
@@ -221,6 +255,19 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Focal-point caption — "what you're looking at" + where the eye should
+            land. Sits just above the metric bar. */}
+        {mode === "data" && focus && !selected && (
+          <div className="pointer-events-none absolute bottom-24 left-1/2 z-10 -translate-x-1/2 px-4 text-center">
+            <p className="text-xs text-fg-muted">
+              Globe coloured by <span className="text-fg">{focus.label}</span> ·{" "}
+              {focus.count} countries · highest:{" "}
+              <span className="font-medium text-accent-warm">{focus.name}</span> (
+              {focus.value})
+            </p>
+          </div>
+        )}
 
         {/* Metric controls (bottom center) — always visible. Picking a metric
             in Realistic mode auto-switches to Data so the choice takes effect. */}
@@ -318,7 +365,7 @@ export default function Home() {
           The 24-hour day changes shape across a lifetime. Using the American Time
           Use Survey, here&apos;s how the people around us shift from age 15 to 80.
         </p>
-        <p className="mt-1.5 max-w-2xl text-[10px] leading-4 text-fg-muted/70">
+        <p className="mt-1.5 max-w-2xl text-[10px] leading-4 text-fg-muted">
           Source: American Time Use Survey (via Our World in Data) · hours per day
           with each relationship, United States · categories can overlap.
         </p>

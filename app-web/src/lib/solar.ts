@@ -36,6 +36,14 @@ export function isDaylight(lat: number, lng: number, date: Date): boolean {
   return cosZenith > 0;
 }
 
+/** Approximate local solar time (0–24h) at a longitude for a given UTC moment.
+ *  Longitude → time-zone offset (15°/hour). Real geometry, not a stored tz db. */
+export function localHour(lng: number, date: Date): number {
+  const utc =
+    date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+  return ((utc + lng / 15) % 24 + 24) % 24;
+}
+
 /** Rough global headcount asleep vs awake, from the day/night split.
  *  Assumes people are asleep where it's local night (a documented simplification). */
 export function sleepersVsWorkers(
