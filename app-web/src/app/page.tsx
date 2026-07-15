@@ -164,6 +164,23 @@ export default function Home() {
     return { label: def.label.toLowerCase(), name: hi.name, value: def.fmt(hi.value), count: rows.length };
   }, [metric]);
 
+  // The selected country's value for the current metric (for the caption).
+  const selectedFocus = useMemo(() => {
+    if (!selected) return null;
+    const def = METRIC_BY_KEY[metric];
+    let v: number | null = null;
+    let name = selectedMetrics?.country ?? selectedCountry?.country ?? "";
+    if (metric === "leisure") v = selectedCountry?.leisureMin ?? null;
+    else if (metric === "work")
+      v = selectedCountry?.workMin ?? working.find((w) => w.code === selected)?.workMin ?? null;
+    else {
+      const mv = selectedMetrics?.[metric];
+      v = typeof mv === "number" ? mv : null;
+    }
+    if (!name) return null;
+    return { name, value: v != null ? def.fmt(v) : "no data" };
+  }, [selected, metric, selectedCountry, selectedMetrics]);
+
   // Heartbeat uses time-use (work/leisure). If the selected country has it, use
   // that; otherwise fall back to the world-average day.
   const heartbeatCountry =
@@ -256,18 +273,31 @@ export default function Home() {
           )}
         </div>
 
-        {/* Focal-point caption — "what you're looking at" + where the eye should
-            land. Sits just above the metric bar. */}
-        {mode === "data" && focus && !selected && (
-          <div className="pointer-events-none absolute bottom-24 left-1/2 z-10 -translate-x-1/2 px-4 text-center">
+        {/* Focal-point caption — "what you're looking at". When a country is
+            selected it names that country + its value; otherwise it names the
+            extreme (Data) or explains the living-Earth view (Realistic). */}
+        <div className="pointer-events-none absolute bottom-24 left-1/2 z-10 -translate-x-1/2 px-4 text-center">
+          {selected && selectedFocus ? (
+            <p className="text-xs text-fg-muted">
+              <span className="font-medium text-accent-warm">{selectedFocus.name}</span> ·{" "}
+              {METRIC_BY_KEY[metric].label}:{" "}
+              <span className="text-fg">{selectedFocus.value}</span> ·{" "}
+              <span className="text-fg-muted">click empty space to reset</span>
+            </p>
+          ) : mode === "data" && focus ? (
             <p className="text-xs text-fg-muted">
               Globe coloured by <span className="text-fg">{focus.label}</span> ·{" "}
               {focus.count} countries · highest:{" "}
               <span className="font-medium text-accent-warm">{focus.name}</span> (
               {focus.value})
             </p>
-          </div>
-        )}
+          ) : mode === "realistic" ? (
+            <p className="text-xs text-fg-muted">
+              A living Earth · glowing dots mark the world&apos;s largest cities ·{" "}
+              <span className="text-fg">switch to Data</span> to colour countries by a metric
+            </p>
+          ) : null}
+        </div>
 
         {/* Metric controls (bottom center) — always visible. Picking a metric
             in Realistic mode auto-switches to Data so the choice takes effect. */}

@@ -48,7 +48,9 @@ interface Props {
 // Prefix with basePath so assets resolve under GitHub Pages' /<repo>/ subpath.
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const GEOJSON_URL = `${BASE}/globe/countries-110m.json`;
-const EARTH_TEX_URL = `${BASE}/globe/earth-night.jpg`;
+// Day "blue marble" — green/tan land vs blue ocean, so countries are legible in
+// Realistic mode (the night-lights texture rendered as an all-blue sphere).
+const EARTH_TEX_URL = `${BASE}/globe/earth-blue-marble.jpg`;
 // Cities always shown, but label only the biggest to avoid clutter.
 const LABELLED_CITIES = 90;
 
