@@ -175,9 +175,9 @@ export default function Home() {
         </div>
 
         {/* Story panel — world by default, country on click — LEFT.
-            Sits below the (large serif) title; capped height clears the legend. */}
+            Overlay on desktop only; on mobile it renders stacked below the hero. */}
         <div
-          className="absolute left-6 top-44 z-10 max-h-[calc(100vh-22rem)] overflow-y-auto md:left-12 md:top-52"
+          className="absolute left-6 top-44 z-10 hidden max-h-[calc(100vh-22rem)] overflow-y-auto md:left-12 md:top-52 md:block"
           style={panelStyle}
         >
           <StoryPanel
@@ -210,15 +210,16 @@ export default function Home() {
           </fieldset>
         </div>
 
-        {/* Legend — bottom left, under the story panel. Shown in both modes so
-            it stays consistent with the always-visible metric bar. */}
-        <div className="pointer-events-none absolute bottom-6 left-6 z-10 md:left-12">
+        {/* Legend — bottom-left on desktop only. Hidden on mobile, where the
+            wrapping metric bar leaves no room and the active chip already shows
+            the selected metric. */}
+        <div className="pointer-events-none absolute bottom-6 left-12 z-10 hidden md:block">
           <Legend metric={metric} />
         </div>
 
         {/* Metric controls (bottom center) — always visible. Picking a metric
             in Realistic mode auto-switches to Data so the choice takes effect. */}
-        <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2">
+        <div className="absolute bottom-5 left-1/2 z-10 w-max max-w-[94vw] -translate-x-1/2">
           <MetricBar
             metric={metric}
             gender={gender}
@@ -232,9 +233,9 @@ export default function Home() {
         </div>
 
         {/* Side panel — country on click, world average by default.
-            Aligned to the SAME top as the left story panel; extends further down. */}
+            Overlay on desktop only; on mobile it renders stacked below the hero. */}
         <div
-          className="pointer-events-none absolute right-6 top-44 z-10 max-h-[calc(100vh-16rem)] overflow-y-auto md:top-52"
+          className="pointer-events-none absolute right-6 top-44 z-10 hidden max-h-[calc(100vh-16rem)] overflow-y-auto md:top-52 md:block"
           style={panelStyleRight}
         >
           <SidePanel
@@ -251,6 +252,25 @@ export default function Home() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-40 z-[5]"
           style={{ background: "linear-gradient(180deg, transparent, #05070f)" }}
           aria-hidden
+        />
+      </section>
+
+      {/* MOBILE-ONLY stacked panels — the desktop overlays are hidden on small
+          screens (they covered the globe), so show them in normal flow here. */}
+      <section className="flex flex-col items-center gap-4 px-6 py-8 md:hidden">
+        {mode === "data" && <Legend metric={metric} />}
+        <StoryPanel
+          title={story.title}
+          subtitle={story.subtitle}
+          paragraphs={story.paragraphs}
+          isWorld={story.isWorld}
+        />
+        <SidePanel
+          country={selected ? selectedCountry : worldAvgCountry}
+          metrics={selected ? selectedMetrics : worldAvgMetrics}
+          worldAvgLeisure={worldAvgLeisure}
+          onClose={() => setSelected(null)}
+          showClose={Boolean(selected)}
         />
       </section>
 
@@ -317,17 +337,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER — sources & credits */}
+      {/* FOOTER — sources & credits (each dataset linked for credibility) */}
       <footer className="border-t border-border/50 px-6 py-10 text-center text-xs text-fg-muted">
-        <p className="mx-auto max-w-2xl leading-5">
-          <strong className="text-fg">24 Hours on Earth</strong> · Analyticon Viz
-          Con 2026. Data: OECD &amp; Our World in Data (time use), World Happiness
-          Report, UN/OWID demographics, FAO (food), Eurostat (commute), American
-          Time Use Survey, GeoNames (cities), Natural Earth (boundaries). All
-          public &amp; cited. Built with React, Next.js, D3, three-globe, and Claude.
-        </p>
-        <p className="mt-3 text-fg-muted">
-          Built by{" "}
+        <p className="text-sm font-semibold text-fg">24 Hours on Earth</p>
+        <p className="mt-0.5">Analyticon Viz Con 2026</p>
+
+        <div className="mx-auto mt-4 max-w-2xl">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-fg-muted">
+            Data sources — all public &amp; cited
+          </p>
+          <p className="leading-6">
+            {[
+              ["Time use (leisure, work)", "https://ourworldindata.org/time-use"],
+              ["World Happiness Report", "https://ourworldindata.org/grapher/happiness-cantril-ladder"],
+              ["Life expectancy", "https://ourworldindata.org/grapher/life-expectancy"],
+              ["Birth & death rates", "https://ourworldindata.org/grapher/crude-birth-rate"],
+              ["Fertility", "https://ourworldindata.org/grapher/children-per-woman"],
+              ["Internet use", "https://ourworldindata.org/grapher/share-of-individuals-using-the-internet"],
+              ["Calories & meat (FAO)", "https://ourworldindata.org/grapher/daily-per-capita-caloric-supply"],
+              ["Vegetables (FAO)", "https://ourworldindata.org/grapher/vegetable-consumption-per-capita"],
+              ["Commute time (Eurostat)", "https://ec.europa.eu/eurostat/databrowser/view/qoe_ewcs_3c3/default/table"],
+              ["Companionship (ATUS)", "https://www.bls.gov/tus/"],
+              ["Population", "https://ourworldindata.org/grapher/population"],
+              ["Cities (GeoNames)", "https://www.geonames.org/"],
+              ["Boundaries (Natural Earth)", "https://www.naturalearthdata.com/"],
+            ].map(([label, href], i, arr) => (
+              <span key={href}>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-fg-muted underline decoration-border underline-offset-2 hover:text-accent hover:decoration-accent"
+                >
+                  {label}
+                </a>
+                {i < arr.length - 1 && <span className="mx-1 opacity-40">·</span>}
+              </span>
+            ))}
+          </p>
+        </div>
+
+        <p className="mt-4 text-fg-muted/80">
+          Built with React, Next.js, D3, three-globe, and Claude — by{" "}
           <a
             href="https://atoz.amazon.work/phonetool/users/vnpras"
             target="_blank"

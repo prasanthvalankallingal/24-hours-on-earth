@@ -56,6 +56,12 @@ export default function Companionship({ data }: Props) {
 
   return (
     <div className="grid gap-8 md:grid-cols-2">
+      {/* Mobile-only: chart sticks to the top so narrative text scrolls beneath
+          it. On desktop the chart lives in the right column (hidden here). */}
+      <div className="sticky top-2 z-10 -mx-6 mb-2 border-b border-border/40 bg-bg/85 px-6 pb-3 pt-2 backdrop-blur md:hidden">
+        <LifeChart points={points} focus={focus} />
+      </div>
+
       {/* Left: narrative steps */}
       <div>
         {STEPS.map((s, i) => (
@@ -63,7 +69,7 @@ export default function Companionship({ data }: Props) {
             key={i}
             data-step={i}
             ref={(el) => { stepRefs.current[i] = el; }}
-            className={`flex min-h-[80vh] flex-col justify-center transition-opacity duration-300 ${
+            className={`flex min-h-[55vh] flex-col justify-center transition-opacity duration-300 md:min-h-[80vh] ${
               step === i ? "opacity-100" : "opacity-40"
             }`}
           >
@@ -82,9 +88,9 @@ export default function Companionship({ data }: Props) {
         ))}
       </div>
 
-      {/* Right: sticky chart. Pinned at a fixed offset with its NATURAL height
-          (not h-screen) so it never releases early on the final step. */}
-      <div className="relative">
+      {/* Right: sticky chart (desktop only — mobile uses the top sticky chart).
+          Natural height so it never releases early on the final step. */}
+      <div className="relative hidden md:block">
         <div className="sticky top-[18vh]">
           <LifeChart points={points} focus={focus} />
         </div>
