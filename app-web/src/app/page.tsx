@@ -10,6 +10,7 @@ import StoryPanel from "@/components/Story/StoryPanel";
 import Heartbeat from "@/components/Heartbeat/Heartbeat";
 import Companionship from "@/components/Story/Companionship";
 import AskTheData from "@/components/Ask/AskTheData";
+import { LiveSleepLine } from "@/components/Hero/NarrativeHook";
 import { computeWorldStats, worldStory, countryStory } from "@/lib/story";
 
 // Client-only: three / react-globe.gl must never load during prerender.
@@ -164,20 +165,24 @@ export default function Home() {
           />
         </div>
 
-        {/* Title */}
-        <div className="pointer-events-none absolute left-6 top-8 z-10 max-w-xl md:left-12">
+        {/* Title + live narrative hook */}
+        <div className="pointer-events-none absolute left-6 top-8 z-10 max-w-md md:left-12">
           <h1 className="display text-5xl md:text-7xl">
             24 Hours <span className="display-italic text-accent-warm">on Earth</span>
           </h1>
           <p className="mt-2 text-sm text-fg-muted md:text-base">
             How the world sleeps, works, and lives.
           </p>
+          <div className="mt-4">
+            <LiveSleepLine cities={cities} />
+          </div>
         </div>
 
         {/* Story panel — world by default, country on click — LEFT.
-            Overlay on desktop only; on mobile it renders stacked below the hero. */}
+            Overlay on desktop only; on mobile it renders stacked below the hero.
+            top-72 clears the title + subtitle + live narrative hook above it. */}
         <div
-          className="absolute left-6 top-44 z-10 hidden max-h-[calc(100vh-22rem)] overflow-y-auto md:left-12 md:top-52 md:block"
+          className="absolute left-6 top-40 z-10 hidden max-h-[calc(100vh-22rem)] overflow-y-auto md:left-12 md:top-60 md:block"
           style={panelStyle}
         >
           <StoryPanel
@@ -188,8 +193,8 @@ export default function Home() {
           />
         </div>
 
-        {/* Realistic / Data toggle — TOP RIGHT */}
-        <div className="absolute right-6 top-8 z-20">
+        {/* Realistic / Data toggle — TOP RIGHT, with the legend directly below it. */}
+        <div className="absolute right-6 top-8 z-20 flex flex-col items-end gap-2">
           <fieldset
             className="flex items-center gap-1 rounded-xl border border-border bg-panel/85 p-1.5 backdrop-blur"
             aria-label="Globe mode"
@@ -208,13 +213,13 @@ export default function Home() {
               </button>
             ))}
           </fieldset>
-        </div>
-
-        {/* Legend — bottom-left on desktop only. Hidden on mobile, where the
-            wrapping metric bar leaves no room and the active chip already shows
-            the selected metric. */}
-        <div className="pointer-events-none absolute bottom-6 left-12 z-10 hidden md:block">
-          <Legend metric={metric} />
+          {/* Legend sits under the toggle (desktop). Hidden on mobile (renders
+              in the stacked section below). */}
+          {mode === "data" && (
+            <div className="pointer-events-none hidden md:block">
+              <Legend metric={metric} />
+            </div>
+          )}
         </div>
 
         {/* Metric controls (bottom center) — always visible. Picking a metric
@@ -235,7 +240,7 @@ export default function Home() {
         {/* Side panel — country on click, world average by default.
             Overlay on desktop only; on mobile it renders stacked below the hero. */}
         <div
-          className="pointer-events-none absolute right-6 top-44 z-10 hidden max-h-[calc(100vh-16rem)] overflow-y-auto md:top-52 md:block"
+          className="pointer-events-none absolute right-6 top-40 z-10 hidden max-h-[calc(100vh-18rem)] overflow-y-auto md:top-60 md:block"
           style={panelStyleRight}
         >
           <SidePanel
