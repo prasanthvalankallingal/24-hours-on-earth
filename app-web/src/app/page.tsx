@@ -300,8 +300,11 @@ export default function Home() {
         </div>
 
         {/* Metric controls (bottom center) — always visible. Picking a metric
-            in Realistic mode auto-switches to Data so the choice takes effect. */}
-        <div className="absolute bottom-5 left-1/2 z-10 w-max max-w-[94vw] -translate-x-1/2">
+            in Realistic mode auto-switches to Data so the choice takes effect.
+            A navigator button hangs off the bottom so there's always a clear,
+            one-click way past the globe (whose wheel is captured for zooming)
+            to the data stories below. */}
+        <div className="absolute bottom-4 left-1/2 z-10 flex w-max max-w-[94vw] -translate-x-1/2 flex-col items-center gap-2">
           <MetricBar
             metric={metric}
             gender={gender}
@@ -312,6 +315,20 @@ export default function Home() {
             }}
             onGender={setGender}
           />
+          <button
+            type="button"
+            onClick={() =>
+              document.getElementById("explore")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              })
+            }
+            className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border bg-panel/85 px-4 py-1.5 text-xs text-fg-muted backdrop-blur transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-accent"
+            aria-label="Scroll down to the data stories below the globe"
+          >
+            Explore the stories
+            <span aria-hidden className="animate-bounce">↓</span>
+          </button>
         </div>
 
         {/* Side panel — country on click, world average by default.
@@ -357,7 +374,7 @@ export default function Home() {
       </section>
 
       {/* 24-HOUR HEARTBEAT SIMULATION */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
+      <section id="explore" className="mx-auto max-w-5xl px-6 py-20 scroll-mt-4">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-leisure">
           The 24-hour heartbeat
         </p>
