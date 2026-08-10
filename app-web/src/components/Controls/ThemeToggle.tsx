@@ -57,7 +57,7 @@ export default function ThemeToggle() {
 
   return (
     <fieldset
-      className="pointer-events-auto flex items-center gap-0.5 rounded-xl border border-border bg-panel/85 p-1 backdrop-blur"
+      className="pointer-events-auto flex items-center gap-1 rounded-xl border border-border bg-panel/85 p-1.5 backdrop-blur"
       aria-label="Colour theme"
     >
       <legend className="sr-only">Colour theme</legend>
@@ -68,7 +68,7 @@ export default function ThemeToggle() {
           onClick={() => pick(o.key)}
           aria-pressed={active === o.key}
           title={`${o.label} theme`}
-          className={`rounded-lg px-2 py-1 text-sm leading-none transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
+          className={`rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
             active === o.key ? "bg-accent text-white" : "text-fg-muted hover:text-fg"
           }`}
         >
