@@ -350,7 +350,7 @@ export default function Home() {
                 block: "start",
               })
             }
-            className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border bg-panel/85 px-4 py-1.5 text-xs text-fg-muted backdrop-blur transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-accent"
+            className="pointer-events-auto flex w-full items-center justify-center gap-2 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/30 transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-accent"
             aria-label="Scroll down to the data stories below the globe"
           >
             Explore the stories

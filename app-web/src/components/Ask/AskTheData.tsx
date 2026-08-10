@@ -70,7 +70,12 @@ export default function AskTheData({ timeuse, metrics }: Props) {
             transition={{ duration: 0.2 }}
             className="mt-5 rounded-2xl border border-border bg-panel/60 p-5"
           >
-            <p className="text-sm leading-6 text-fg">{answer.text}</p>
+            {answer.writeup && (
+              <p className="mb-3 text-sm leading-6 text-fg">{answer.writeup}</p>
+            )}
+            <p className={`text-sm leading-6 ${answer.writeup ? "text-fg-muted" : "text-fg"}`}>
+              {answer.text}
+            </p>
             {answer.rows && (
               <ul className="mt-3 space-y-1.5">
                 {answer.rows.map((r) => (

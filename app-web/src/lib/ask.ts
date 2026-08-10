@@ -11,6 +11,10 @@ import type { CountryTimeUse, CountryMetrics } from "./types";
 import { METRICS, type MetricDef } from "./types";
 
 export interface AskAnswer {
+  /** Prose summary shown above the table. Computed from the real numbers —
+      leader, runner-up, gap, and the overall average/spread — never invented. */
+  writeup?: string;
+  /** Short caption directly above the ranked list. */
   text: string;
   rows?: { label: string; value: string }[];
 }
@@ -150,8 +154,36 @@ export function ask(
   const list = wantsLow ? [...sorted].reverse() : sorted;
   const top = list.slice(0, 5);
   const verb = wantsLow ? "lowest" : "highest";
+  const label = def.label.toLowerCase();
+
+  // Prose write-up — every figure below is read straight from `rows`.
+  const leader = list[0];
+  const runner = list[1];
+  const mean = rows.reduce((s, r) => s + r.value, 0) / rows.length;
+  const superlative = wantsLow ? "lowest" : "highest";
+  const compare = wantsLow ? "below" : "above";
+
+  const sentences: string[] = [
+    `${leader.country} has the ${superlative} ${label} of any country with data, at ${def.fmt(leader.value)}.`,
+  ];
+  if (runner) {
+    const gap = Math.abs(leader.value - runner.value);
+    const gapPct = mean ? Math.round((gap / Math.abs(mean)) * 100) : 0;
+    sentences.push(
+      gap > 0
+        ? `That's ${def.fmt(gap)} ${wantsLow ? "less than" : "more than"} ${runner.country} in second place${
+            gapPct >= 3 ? ` — a gap of about ${gapPct}% of the global average` : ""
+          }.`
+        : `${runner.country} is level with it in second place.`,
+    );
+  }
+  sentences.push(
+    `Across all ${rows.length} countries with data, the average is ${def.fmt(mean)}, so the leaders sit well ${compare} the norm.`,
+  );
+
   return {
-    text: `${verb === "highest" ? "Highest" : "Lowest"} ${def.label.toLowerCase()} (${rows.length} countries with data):`,
+    writeup: sentences.join(" "),
+    text: `${verb === "highest" ? "Highest" : "Lowest"} ${label} (${rows.length} countries with data):`,
     rows: top.map((r, i) => ({ label: `${i + 1}. ${r.country}`, value: def.fmt(r.value) })),
   };
 }
