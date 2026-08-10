@@ -33,6 +33,11 @@ export const metadata: Metadata = {
     "An interactive exploration of how the world spends its 24 hours. VizCon 2026.",
 };
 
+// Resolve the theme BEFORE first paint so there's no dark-flash on a light
+// system (or vice-versa). Stored choice wins; otherwise follow the OS setting.
+// Kept as a string so it runs synchronously in <head>, ahead of React.
+const themeInit = `(function(){try{var s=localStorage.getItem("theme");var m=window.matchMedia("(prefers-color-scheme: light)").matches;var light=s?s==="light":m;var c=document.documentElement.classList;c.toggle("light",light);c.toggle("dark",!light);document.documentElement.style.colorScheme=light?"light":"dark";}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,8 +46,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${displaySerif.variable} ${bodySans.variable} ${dataMono.variable} h-full antialiased`}
+      // Default class is dark; the inline script corrects it before paint.
+      className={`${displaySerif.variable} ${bodySans.variable} ${dataMono.variable} h-full antialiased dark`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

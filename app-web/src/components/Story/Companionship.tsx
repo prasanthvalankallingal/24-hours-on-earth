@@ -138,7 +138,7 @@ function LifeChart({ points, focus }: { points: CompanionshipPoint[]; focus: Rel
           {/* axes */}
           {y.ticks(5).map((t) => (
             <g key={t} transform={`translate(0,${y(t)})`}>
-              <line x1={0} x2={iw} stroke="#1e2740" strokeWidth={1} />
+              <line x1={0} x2={iw} stroke="var(--border)" strokeWidth={1} />
               <text x={-8} y={4} textAnchor="end" className="fill-fg-muted" style={{ fontSize: 10 }}>{t}h</text>
             </g>
           ))}

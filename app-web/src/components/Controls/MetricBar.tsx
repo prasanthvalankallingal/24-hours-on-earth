@@ -68,7 +68,7 @@ export default function MetricBar({ metric, gender, mode, onMetric, onGender }: 
                   onClick={() => onGender(g)}
                   aria-pressed={gender === g}
                   className={`${chip} capitalize ${
-                    gender === g ? "bg-accent text-black font-medium" : "text-fg-muted hover:text-fg"
+                    gender === g ? "bg-accent text-white font-medium" : "text-fg-muted hover:text-fg"
                   }`}
                 >
                   {g}
@@ -118,7 +118,7 @@ function MetricChip({
       aria-pressed={active}
       disabled={disabled}
       className={`${chip} ${
-        active ? "bg-fg text-black font-medium" : "text-fg-muted hover:text-fg"
+        active ? "bg-accent text-white font-medium" : "text-fg-muted hover:text-fg"
       } ${disabled ? "cursor-not-allowed" : ""}`}
     >
       {def.short}

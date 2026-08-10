@@ -249,7 +249,7 @@ export default function EarthGlobe(props: Props) {
           const v = code ? valueFor(code) : null;
           const name = d?.properties?.name ?? "";
           const txt = v != null ? def.fmt(v) : "no data";
-          return `<div style="background:#0f1425;color:#e8ecf7;padding:6px 10px;border:1px solid #1e2740;border-radius:8px;font-size:12px"><b>${name}</b><br/>${def.short}: ${txt}</div>`;
+          return `<div style="background:var(--panel);color:var(--fg);padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px"><b>${name}</b><br/>${def.short}: ${txt}</div>`;
         }}
         onPolygonClick={(d: any) => {
           const code = codeOf(d);

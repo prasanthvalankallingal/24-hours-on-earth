@@ -40,7 +40,7 @@ export default function AskTheData({ timeuse, metrics }: Props) {
         />
         <button
           type="submit"
-          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-black hover:opacity-90 focus-visible:outline-2 focus-visible:outline-accent"
+          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-accent"
         >
           Ask
         </button>

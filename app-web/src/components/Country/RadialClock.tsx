@@ -91,7 +91,7 @@ export default function RadialClock({ data, size = 280 }: Props) {
               y1={y1}
               x2={x2}
               y2={y2}
-              stroke="#1e2740"
+              stroke="var(--border)"
               strokeWidth={h % 6 === 0 ? 2 : 1}
             />
           );

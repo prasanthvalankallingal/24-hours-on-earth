@@ -6,12 +6,14 @@ import type { GlobeMode } from "@/components/Globe/EarthGlobe";
 import MetricBar from "@/components/Controls/MetricBar";
 import SidePanel from "@/components/Country/SidePanel";
 import Legend from "@/components/Controls/Legend";
+import ThemeToggle from "@/components/Controls/ThemeToggle";
 import StoryPanel from "@/components/Story/StoryPanel";
 import Heartbeat from "@/components/Heartbeat/Heartbeat";
 import Companionship from "@/components/Story/Companionship";
 import AskTheData from "@/components/Ask/AskTheData";
 import { LiveSleepLine } from "@/components/Hero/NarrativeHook";
 import { METRIC_BY_KEY } from "@/lib/types";
+import { CITY_GLOW } from "@/lib/colors";
 import { computeWorldStats, worldStory, countryStory } from "@/lib/story";
 
 // Client-only: three / react-globe.gl must never load during prerender.
@@ -246,29 +248,54 @@ export default function Home() {
 
         {/* Realistic / Data toggle — TOP RIGHT, with the legend directly below it. */}
         <div className="absolute right-6 top-8 z-20 flex flex-col items-end gap-2">
-          <fieldset
-            className="flex items-center gap-1 rounded-xl border border-border bg-panel/85 p-1.5 backdrop-blur"
-            aria-label="Globe mode"
-          >
-            <legend className="sr-only">Globe mode</legend>
-            {(["realistic", "data"] as GlobeMode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                aria-pressed={mode === m}
-                className={`rounded-lg px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
-                  mode === m ? "bg-accent font-medium text-black" : "text-fg-muted hover:text-fg"
-                }`}
-              >
-                {m === "realistic" ? "🌍 Realistic" : "📊 Data"}
-              </button>
-            ))}
-          </fieldset>
+          {/* Theme switch sits inline, just before the Realistic / Data toggle. */}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <fieldset
+              className="flex items-center gap-1 rounded-xl border border-border bg-panel/85 p-1.5 backdrop-blur"
+              aria-label="Globe mode"
+            >
+              <legend className="sr-only">Globe mode</legend>
+              {(["realistic", "data"] as GlobeMode[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  aria-pressed={mode === m}
+                  className={`rounded-lg px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
+                    mode === m ? "bg-accent font-medium text-white" : "text-fg-muted hover:text-fg"
+                  }`}
+                >
+                  {m === "realistic" ? "🌍 Realistic" : "📊 Data"}
+                </button>
+              ))}
+            </fieldset>
+          </div>
           {/* Legend sits under the toggle (desktop). Hidden on mobile (renders
-              in the stacked section below). */}
-          {mode === "data" && (
+              in the stacked section below). In Data mode it's the metric colour
+              ramp; in Realistic mode the countries show the satellite texture
+              (no metric colours), so we show a matching key for that view
+              instead — never an empty gap under the selector. */}
+          {mode === "data" ? (
             <div className="pointer-events-none hidden md:block">
               <Legend metric={metric} />
+            </div>
+          ) : (
+            <div className="pointer-events-none hidden md:block">
+              <div className="rounded-lg border border-border bg-panel/85 p-3 text-xs backdrop-blur">
+                <div className="mb-1.5 font-medium text-fg">Realistic view</div>
+                <div className="flex items-center gap-1.5 text-[10px] text-fg-muted">
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    style={{ background: CITY_GLOW, boxShadow: `0 0 6px ${CITY_GLOW}` }}
+                  />
+                  major cities
+                </div>
+                <div className="mt-1.5 text-[10px] leading-4 text-fg-muted">
+                  Day &amp; night follow the real sun.
+                  <br />
+                  Switch to <span className="text-fg">Data</span> to colour countries.
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -309,10 +336,10 @@ export default function Home() {
             metric={metric}
             gender={gender}
             mode="data"
-            onMetric={(m) => {
-              setMetric(m);
-              setMode("data");
-            }}
+            // Selecting a metric stays in the current view. In Realistic view
+            // it just arms the choice — it shows the moment you toggle to Data,
+            // instead of forcing you out of the satellite view.
+            onMetric={setMetric}
             onGender={setGender}
           />
           <button
@@ -349,7 +376,7 @@ export default function Home() {
         {/* soft fade so the globe dissolves into the cosmos below — no hard seam */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-40 z-[5]"
-          style={{ background: "linear-gradient(180deg, transparent, #05070f)" }}
+          style={{ background: "linear-gradient(180deg, transparent, var(--bg))" }}
           aria-hidden
         />
       </section>

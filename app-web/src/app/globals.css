@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 /* ── "24 Hours on Earth" design system ────────────────────────── */
+/* Dark (night-sky) is the default. Light (daytime-sky) overrides the
+   same tokens under html.light. The inline script in layout.tsx resolves
+   system / stored preference to one of those classes before first paint. */
 :root {
   /* Night-sky base */
   --bg: #05070f;
@@ -21,6 +24,25 @@
   --act-leisure: #4fd1a1;
   --act-unpaid: #f56ea8;
   --act-other: #b0b8d0;
+}
+
+/* Daytime sky — deeper ink text on soft-blue paper, accents darkened for
+   contrast against light panels. Same variable names, so every component
+   using bg-panel / text-fg / text-fg-muted flips automatically. */
+html.light {
+  --bg: #eaf0fb;
+  --bg-soft: #dde6f5;
+  --panel: #ffffff;
+  --border: #cdd7e8;
+  --fg: #141a2c;
+  --fg-muted: #4b5878;
+
+  --accent: #2f6fe0;
+  --accent-warm: #c9761f;
+  --accent-2: #7a45d8;
+
+  /* nudge the palest data colour so it reads on white */
+  --act-other: #6b748f;
 }
 
 @theme inline {
@@ -90,6 +112,19 @@ body {
     radial-gradient(1.5px 1.5px at 90% 75%, #ffffff44, transparent),
     radial-gradient(1px 1px at 55% 15%, #ffffff2e, transparent),
     linear-gradient(180deg, #05070f 0%, #070a16 45%, #05070f 100%);
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+/* Daytime version of the same backdrop — a soft dawn sky with a warm sun-glow
+   top-right (echoing the amber "on Earth"), cool blue mid, no stars. Keeps the
+   globe floating on one continuous sky just like the night theme. */
+html.light .cosmos {
+  background:
+    radial-gradient(1200px 820px at 82% 4%, rgba(255,196,120,0.40), transparent 62%),
+    radial-gradient(1000px 900px at 10% 26%, rgba(120,170,255,0.22), transparent 60%),
+    radial-gradient(900px 760px at 58% 100%, rgba(150,200,255,0.20), transparent 60%),
+    linear-gradient(180deg, #f1f6ff 0%, #e4ecfa 52%, #eaf0fb 100%);
   background-attachment: fixed;
   background-size: cover;
 }

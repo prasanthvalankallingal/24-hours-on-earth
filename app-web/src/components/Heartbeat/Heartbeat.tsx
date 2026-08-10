@@ -160,7 +160,7 @@ export default function Heartbeat({ workMin, leisureMin, label }: Props) {
       <div className="mb-3 flex flex-wrap items-center gap-4">
         <button
           onClick={() => setPlaying((p) => !p)}
-          className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-black focus-visible:outline-2 focus-visible:outline-accent"
+          className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-accent"
           aria-pressed={playing}
         >
           {playing ? "⏸ Pause" : "▶ Play"}
