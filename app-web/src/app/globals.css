@@ -98,33 +98,84 @@ body {
 
 /* One continuous cosmic backdrop for the whole page. Fixed so every section —
    globe, heartbeat, story — floats on the same universe; nothing feels like a
-   separate box. Layered nebula tints + multi-scale star specks. */
+   separate box. The main element carries the deep-space base, three soft distant
+   planets, a faint Milky-Way band and nebula tints; the dense starfield lives on
+   ::before so it can *tile* across the whole viewport (hundreds of stars) and
+   gently twinkle. z-index:0 makes .cosmos its own stacking context so the star
+   layer (z-index:-1) sits above the base but behind the globe and all content. */
 .cosmos {
+  position: relative;
+  z-index: 0;
   background:
-    radial-gradient(1200px 800px at 78% 8%, rgba(110,168,255,0.10), transparent 60%),
-    radial-gradient(1000px 900px at 12% 30%, rgba(185,140,255,0.09), transparent 60%),
-    radial-gradient(900px 700px at 60% 95%, rgba(79,209,161,0.06), transparent 60%),
-    radial-gradient(1px 1px at 20% 30%, #ffffff66, transparent),
-    radial-gradient(1px 1px at 70% 60%, #ffffff44, transparent),
-    radial-gradient(1.5px 1.5px at 40% 80%, #ffffff55, transparent),
-    radial-gradient(1px 1px at 85% 20%, #ffffff33, transparent),
-    radial-gradient(1px 1px at 33% 68%, #ffffff33, transparent),
-    radial-gradient(1.5px 1.5px at 90% 75%, #ffffff44, transparent),
-    radial-gradient(1px 1px at 55% 15%, #ffffff2e, transparent),
-    linear-gradient(180deg, #05070f 0%, #070a16 45%, #05070f 100%);
+    /* --- three distant planets (soft lit discs; fixed px radii survive `cover`) --- */
+    radial-gradient(20px 20px at 15.4% 20.6%, #d9c7ff 0%, #9f82e6 42%, #6a4bb0 74%, rgba(106,75,176,0) 80%),
+    radial-gradient(32px 32px at 84% 82%, #ffd9a8 0%, #e0a05a 44%, #a5602a 76%, rgba(165,96,42,0) 82%),
+    radial-gradient(11px 11px at 71% 41%, #bfeee0 0%, #66c3ac 50%, #2f7f6a 82%, rgba(47,127,106,0) 88%),
+    /* --- faint Milky-Way band sweeping across --- */
+    linear-gradient(118deg, transparent 38%, rgba(150,180,255,0.05) 48%, rgba(210,200,255,0.07) 52%, transparent 62%),
+    /* --- nebula tints --- */
+    radial-gradient(1200px 800px at 78% 8%, rgba(110,168,255,0.12), transparent 60%),
+    radial-gradient(1000px 900px at 12% 30%, rgba(185,140,255,0.11), transparent 60%),
+    radial-gradient(900px 700px at 60% 95%, rgba(79,209,161,0.07), transparent 60%),
+    /* --- deep-space base --- */
+    linear-gradient(180deg, #04060d 0%, #070a16 45%, #04060d 100%);
   background-attachment: fixed;
   background-size: cover;
 }
 
-/* Daytime version of the same backdrop — a soft dawn sky with a warm sun-glow
-   top-right (echoing the amber "on Earth"), cool blue mid, no stars. Keeps the
-   globe floating on one continuous sky just like the night theme. */
+/* Dense, tiled starfield. Each layer is one star repeated on a differently-sized
+   grid; overlaid, the mismatched tile sizes scatter hundreds of stars with no
+   visible grid. Fixed to the viewport so the sky stays put while you scroll. */
+.cosmos::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 30px 40px, #ffffff, transparent),
+    radial-gradient(1px 1px at 120px 90px, #ffffffcc, transparent),
+    radial-gradient(2.2px 2.2px at 80px 165px, #ffffff, transparent),
+    radial-gradient(1px 1px at 165px 30px, #cfe0ffdd, transparent),
+    radial-gradient(1.4px 1.4px at 210px 130px, #ffe9c8ee, transparent),
+    radial-gradient(1px 1px at 50px 210px, #ffffffbb, transparent),
+    radial-gradient(1.2px 1.2px at 250px 60px, #ffffffdd, transparent),
+    radial-gradient(1px 1px at 20px 130px, #e8f0ffcc, transparent);
+  background-size:
+    200px 200px, 170px 170px, 250px 250px, 150px 150px,
+    300px 300px, 220px 220px, 280px 280px, 190px 190px;
+  background-repeat: repeat;
+  animation: twinkle 5.5s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* Daytime sky has no stars — hide the field in light mode. */
+html.light .cosmos::before { display: none; }
+
+/* Daytime version of the same backdrop — a bright open sky: a warm sun disc with
+   a soft halo top-right (echoing the amber "on Earth"), a few drifting clouds,
+   and a clear blue gradient. Keeps the globe floating on one continuous sky just
+   like the night theme. */
 html.light .cosmos {
   background:
-    radial-gradient(1200px 820px at 82% 4%, rgba(255,196,120,0.40), transparent 62%),
-    radial-gradient(1000px 900px at 10% 26%, rgba(120,170,255,0.22), transparent 60%),
-    radial-gradient(900px 760px at 58% 100%, rgba(150,200,255,0.20), transparent 60%),
-    linear-gradient(180deg, #f1f6ff 0%, #e4ecfa 52%, #eaf0fb 100%);
+    /* --- the sun: a bright core with a warm halo --- */
+    radial-gradient(46px 46px at 83% 12%, #fffdf5 0%, #fff1c8 46%, #ffe19a 72%, rgba(255,225,154,0) 100%),
+    radial-gradient(560px 560px at 83% 12%, rgba(255,214,150,0.55), rgba(255,224,170,0.22) 40%, transparent 68%),
+    /* --- soft clouds (blurred white puffs) --- */
+    radial-gradient(220px 90px at 22% 34%, rgba(255,255,255,0.92), rgba(255,255,255,0) 72%),
+    radial-gradient(300px 110px at 30% 30%, rgba(255,255,255,0.75), rgba(255,255,255,0) 74%),
+    radial-gradient(200px 80px at 68% 62%, rgba(255,255,255,0.80), rgba(255,255,255,0) 72%),
+    radial-gradient(260px 95px at 74% 66%, rgba(255,255,255,0.62), rgba(255,255,255,0) 74%),
+    radial-gradient(170px 70px at 12% 74%, rgba(255,255,255,0.70), rgba(255,255,255,0) 72%),
+    /* --- sky depth tints --- */
+    radial-gradient(1000px 900px at 10% 26%, rgba(120,170,255,0.20), transparent 60%),
+    radial-gradient(900px 760px at 58% 100%, rgba(150,200,255,0.22), transparent 60%),
+    /* --- clear blue sky base (lighter up high, deeper toward horizon) --- */
+    linear-gradient(180deg, #cfe4ff 0%, #dcebff 40%, #eaf2ff 74%, #eef4fc 100%);
   background-attachment: fixed;
   background-size: cover;
 }
