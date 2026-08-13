@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 // Resolve the theme BEFORE first paint so there's no dark-flash on a light
 // system (or vice-versa). Stored choice wins; otherwise follow the OS setting.
 // Kept as a string so it runs synchronously in <head>, ahead of React.
-const themeInit = `(function(){try{var s=localStorage.getItem("theme");var m=window.matchMedia("(prefers-color-scheme: light)").matches;var light=s?s==="light":m;var c=document.documentElement.classList;c.toggle("light",light);c.toggle("dark",!light);document.documentElement.style.colorScheme=light?"light":"dark";}catch(e){}})();`;
+const themeInit = `(function(){try{var s=localStorage.getItem("theme");var light=s==="light";var c=document.documentElement.classList;c.toggle("light",light);c.toggle("dark",!light);document.documentElement.style.colorScheme=light?"light":"dark";}catch(e){}})();`;
 
 export default function RootLayout({
   children,

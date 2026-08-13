@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Choice = "system" | "light" | "dark";
+type Choice = "light" | "dark";
 
 // Apply a resolved theme to <html>: toggle light/dark classes + color-scheme
 // (so native scrollbars / form controls match). Mirrors the pre-paint script
@@ -15,45 +15,33 @@ function apply(light: boolean) {
 }
 
 const OPTIONS: { key: Choice; label: string; icon: string }[] = [
-  { key: "system", label: "System", icon: "🖥️" },
   { key: "light", label: "Light", icon: "☀️" },
   { key: "dark", label: "Dark", icon: "🌙" },
 ];
 
 export default function ThemeToggle() {
-  const [choice, setChoice] = useState<Choice>("system");
+  // Dark is the default for everyone; light only when the visitor explicitly
+  // picked it (persisted in localStorage).
+  const [choice, setChoice] = useState<Choice>("dark");
   // Avoid a hydration mismatch: the button labels depend on client-only state,
   // so we only reflect the real choice after mount.
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = (localStorage.getItem("theme") as Choice | null) ?? null;
-    setChoice(stored ?? "system");
+    // Anything other than an explicit "light" (missing key, or a legacy
+    // "system" value from before) resolves to dark.
+    const stored = localStorage.getItem("theme");
+    setChoice(stored === "light" ? "light" : "dark");
     setMounted(true);
   }, []);
 
-  // When following the system and no explicit choice is stored, react live to
-  // the OS switching light/dark.
-  useEffect(() => {
-    if (choice !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: light)");
-    const onChange = () => apply(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, [choice]);
-
   function pick(next: Choice) {
     setChoice(next);
-    if (next === "system") {
-      localStorage.removeItem("theme");
-      apply(window.matchMedia("(prefers-color-scheme: light)").matches);
-    } else {
-      localStorage.setItem("theme", next);
-      apply(next === "light");
-    }
+    localStorage.setItem("theme", next);
+    apply(next === "light");
   }
 
-  const active = mounted ? choice : "system";
+  const active = mounted ? choice : "dark";
 
   return (
     <fieldset

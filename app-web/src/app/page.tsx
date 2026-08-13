@@ -246,10 +246,9 @@ export default function Home() {
           />
         </div>
 
-        {/* Realistic / Data toggle — TOP RIGHT, with the legend directly below it. */}
-        <div className="absolute right-6 top-8 z-20 flex flex-col items-end gap-2">
-          {/* Theme switch sits inline, just before the Realistic / Data toggle. */}
-          <div className="flex items-center gap-2">
+        {/* Theme + Realistic/Data toggles — floating top-right (fixed) so they
+            stay reachable no matter how far you scroll. */}
+        <div className="fixed right-6 top-8 z-30 flex items-center gap-2">
             <ThemeToggle />
             <fieldset
               className="flex items-center gap-1 rounded-xl border border-border bg-panel/85 p-1.5 backdrop-blur"
@@ -269,12 +268,14 @@ export default function Home() {
                 </button>
               ))}
             </fieldset>
-          </div>
-          {/* Legend sits under the toggle (desktop). Hidden on mobile (renders
-              in the stacked section below). In Data mode it's the metric colour
-              ramp; in Realistic mode the countries show the satellite texture
-              (no metric colours), so we show a matching key for that view
-              instead — never an empty gap under the selector. */}
+        </div>
+
+        {/* Legend sits just under the floating toggles (desktop), tied to the
+            globe view so it scrolls away with the map. Hidden on mobile (renders
+            in the stacked section below). In Data mode it's the metric colour
+            ramp; in Realistic mode a matching key for the satellite view —
+            never an empty gap under the selector. */}
+        <div className="absolute right-6 top-[5.25rem] z-20 flex flex-col items-end">
           {mode === "data" ? (
             <div className="pointer-events-none hidden md:block">
               <Legend metric={metric} />
