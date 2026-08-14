@@ -11,6 +11,7 @@ import StoryPanel from "@/components/Story/StoryPanel";
 import Heartbeat from "@/components/Heartbeat/Heartbeat";
 import Companionship from "@/components/Story/Companionship";
 import AskTheData from "@/components/Ask/AskTheData";
+import DataTable from "@/components/Table/DataTable";
 import { LiveSleepLine } from "@/components/Hero/NarrativeHook";
 import { METRIC_BY_KEY } from "@/lib/types";
 import { CITY_GLOW } from "@/lib/colors";
@@ -99,7 +100,9 @@ export default function Home() {
     return {
       country: "World average",
       code: "WORLD",
-      region: `${worldStats.countriesWithTimeUse} surveyed countries`,
+      // Show coverage honestly: the work/leisure survey covers 33 countries,
+      // while the births/deaths/diet/life figures shown alongside span up to ~237.
+      region: `Time use: ${worldStats.countriesWithTimeUse} countries · life & population: ~${worldStats.countriesWithMetrics}`,
       population: 0,
       leisureWomenMin: mean((d) => d.leisureWomenMin),
       leisureMenMin: mean((d) => d.leisureMenMin),
@@ -134,7 +137,9 @@ export default function Home() {
     }
     return {
       title: "The world's average day",
-      subtitle: `Across ${worldStats.countriesWithMetrics} countries`,
+      // Match the side panel's coverage label: the "average day" is time-use
+      // (33 countries), while the wider life & population figures span up to ~237.
+      subtitle: `Time use: ${worldStats.countriesWithTimeUse} countries · life & population: ~${worldStats.countriesWithMetrics}`,
       paragraphs: worldStory(worldStats),
       isWorld: true,
     };
@@ -246,9 +251,13 @@ export default function Home() {
           />
         </div>
 
-        {/* Theme + Realistic/Data toggles — floating top-right (fixed) so they
-            stay reachable no matter how far you scroll. */}
-        <div className="fixed right-6 top-8 z-30 flex items-center gap-2">
+        {/* Theme + Realistic/Data toggles — floating (fixed) so they stay
+            reachable no matter how far you scroll, on every screen size. On
+            mobile there's no side gutter, so they shrink to icon-only chips
+            stacked in the very top-right corner with an opaque panel, keeping
+            them clear of the left-aligned title and section headings. On
+            desktop they widen into a labelled row in the right gutter. */}
+        <div className="fixed right-3 top-3 z-30 flex flex-col items-end gap-2 md:right-6 md:top-8 md:flex-row md:items-center">
             <ThemeToggle />
             <fieldset
               className="flex items-center gap-1 rounded-xl border border-border bg-panel/85 p-1.5 backdrop-blur"
@@ -260,11 +269,15 @@ export default function Home() {
                   key={m}
                   onClick={() => setMode(m)}
                   aria-pressed={mode === m}
+                  aria-label={m === "realistic" ? "Realistic view" : "Data view"}
                   className={`rounded-lg px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
                     mode === m ? "bg-accent font-medium text-white" : "text-fg-muted hover:text-fg"
                   }`}
                 >
-                  {m === "realistic" ? "🌍 Realistic" : "📊 Data"}
+                  <span aria-hidden>{m === "realistic" ? "🌍" : "📊"}</span>
+                  <span className="hidden md:inline">
+                    {m === "realistic" ? " Realistic" : " Data"}
+                  </span>
                 </button>
               ))}
             </fieldset>
@@ -461,6 +474,23 @@ export default function Home() {
         </p>
         <div className="mt-8">
           <AskTheData timeuse={timeuse} metrics={metrics} />
+        </div>
+      </section>
+
+      {/* EXPLORE THE TABLE — filterable, sortable, CSV-exportable long-format
+          view of every country × metric, grouped by business region. */}
+      <section className="mx-auto max-w-5xl px-6 py-20">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-work">
+          Every number, one table
+        </p>
+        <h2 className="display mt-1 text-4xl md:text-5xl">Browse &amp; export the data</h2>
+        <p className="mt-2 max-w-2xl text-sm text-fg-muted">
+          Filter by region and metric, search for a country, sort any column,
+          and download exactly what you&apos;re looking at as a CSV — the same
+          public figures that power the globe above.
+        </p>
+        <div className="mt-8">
+          <DataTable timeuse={timeuse} metrics={metrics} />
         </div>
       </section>
 

@@ -100,7 +100,10 @@ export default function Companionship({ data }: Props) {
 }
 
 function LifeChart({ points, focus }: { points: CompanionshipPoint[]; focus: Rel | null }) {
-  const [w, setW] = useState(480);
+  // Start narrow enough to fit any phone: an oversized initial width would
+  // widen the page, and the ResizeObserver would then measure that widened
+  // width and lock the chart too wide. It grows to fit its container on mount.
+  const [w, setW] = useState(320);
   const h = 380;
   const wrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -133,7 +136,7 @@ function LifeChart({ points, focus }: { points: CompanionshipPoint[]; focus: Rel
 
   return (
     <div ref={wrapRef} className="h-full w-full">
-      <svg width={w} height={h} role="img" aria-label="Hours per day spent with each relationship, by age, United States">
+      <svg width={w} height={h} style={{ maxWidth: "100%", display: "block" }} role="img" aria-label="Hours per day spent with each relationship, by age, United States">
         <g transform={`translate(${m.left},${m.top})`}>
           {/* axes */}
           {y.ticks(5).map((t) => (
