@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import type { CountryTimeUse, CountryMetrics } from "@/lib/types";
 import { ask, SUGGESTIONS, type AskAnswer } from "@/lib/ask";
@@ -92,8 +93,14 @@ export default function AskTheData({ timeuse, metrics }: Props) {
 
       <p className="mt-4 text-center text-[10px] leading-4 text-fg-muted">
         Answers are computed live from the underlying datasets — every figure is
-        sourced, none invented. Built with the help of Claude (documented for the
-        Best Use of GenAI award).
+        sourced, none invented. Built with the help of Claude (
+        <Link
+          href="/documentation/#genai"
+          className="underline decoration-border underline-offset-2 hover:text-accent hover:decoration-accent"
+        >
+          documented for the Best Use of GenAI award
+        </Link>
+        ).
       </p>
     </div>
   );

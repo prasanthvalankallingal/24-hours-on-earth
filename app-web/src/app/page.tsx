@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import type { GlobeMode } from "@/components/Globe/EarthGlobe";
 import MetricBar from "@/components/Controls/MetricBar";
 import SidePanel from "@/components/Country/SidePanel";
@@ -499,7 +500,16 @@ export default function Home() {
         <p className="text-sm font-semibold text-fg">24 Hours on Earth</p>
         <p className="mt-0.5">Analyticon Viz Con 2026</p>
 
-        <div className="mx-auto mt-4 max-w-2xl">
+        <p className="mt-3">
+          <Link
+            href="/documentation"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            Read the making-of &amp; methodology <span aria-hidden>→</span>
+          </Link>
+        </p>
+
+        <div className="mx-auto mt-6 max-w-2xl">
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-fg-muted">
             Data sources — all public &amp; cited
           </p>
@@ -535,7 +545,11 @@ export default function Home() {
         </div>
 
         <p className="mt-4 text-fg-muted/80">
-          Built with React, Next.js, D3, three-globe, and Claude — by{" "}
+          Built with React, Next.js, D3, three-globe, and{" "}
+          <Link href="/documentation/#genai" className="font-medium text-accent hover:underline">
+            Claude
+          </Link>{" "}
+          — by{" "}
           <a
             href="https://atoz.amazon.work/phonetool/users/vnpras"
             target="_blank"
@@ -544,6 +558,11 @@ export default function Home() {
           >
             @vnpras
           </a>
+        </p>
+        <p className="mt-1 text-fg-muted/70">
+          <Link href="/documentation/#genai" className="underline decoration-border underline-offset-2 hover:text-accent hover:decoration-accent">
+            How AI was used →
+          </Link>
         </p>
       </footer>
     </main>
