@@ -1,0 +1,15 @@
+# Cloudflare Worker config for the "Ask the data" language router.
+#
+# Deploy (you run these — the key never enters chat or the repo):
+#   cd worker
+#   npx wrangler login                      # one-time, opens browser
+#   npx wrangler secret put OPENAI_API_KEY  # paste the key at the prompt
+#   npx wrangler deploy
+#
+# `wrangler deploy` prints the live URL, e.g.
+#   https://ask-the-data-router.<your-subdomain>.workers.dev
+# Put that URL in the site build as NEXT_PUBLIC_ROUTER_URL (see app-web README).
+
+name = "ask-the-data-router"
+main = "router.js"
+compatibility_date = "2024-11-01"

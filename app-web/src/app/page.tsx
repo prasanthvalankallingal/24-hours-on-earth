@@ -12,6 +12,7 @@ import StoryPanel from "@/components/Story/StoryPanel";
 import Heartbeat from "@/components/Heartbeat/Heartbeat";
 import Companionship from "@/components/Story/Companionship";
 import AskTheData from "@/components/Ask/AskTheData";
+import ChatWidget from "@/components/Ask/ChatWidget";
 import DataTable from "@/components/Table/DataTable";
 import { LiveSleepLine } from "@/components/Hero/NarrativeHook";
 import { METRIC_BY_KEY } from "@/lib/types";
@@ -565,6 +566,10 @@ export default function Home() {
           </Link>
         </p>
       </footer>
+
+      {/* Floating "Ask the data" launcher — fixed bottom-left, reachable from
+          anywhere on the page. Same sourced-answer engine as the inline box. */}
+      <ChatWidget timeuse={timeuse} metrics={metrics} />
     </main>
   );
 }

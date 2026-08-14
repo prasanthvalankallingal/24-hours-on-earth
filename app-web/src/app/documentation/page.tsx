@@ -34,6 +34,7 @@ const TOOLS: [string, string][] = [
   ["Tailwind CSS v4", "design tokens, dark/light theming"],
   ["Framer Motion", "panel & story transitions"],
   ["GitHub Pages + Actions", "public hosting, deploy on push to main"],
+  ["Serverless LLM router", "a tiny Cloudflare Worker that turns questions into structured queries — see “Ask the data” below"],
   ["Claude (Claude Code)", "AI pair-programmer across the whole build — see below"],
 ];
 
@@ -136,7 +137,7 @@ export default function DocumentationPage() {
           <li><strong className="text-fg">Click a country.</strong> Its full 24-hour radial clock and life numbers slide in, compared against the world average.</li>
           <li><strong className="text-fg">Watch a day unfold.</strong> The heartbeat simulation animates a thousand people moving through sleep, work, and leisure.</li>
           <li><strong className="text-fg">Scroll a lifetime.</strong> The companionship chart walks you through who we spend our hours with, one relationship at a time.</li>
-          <li><strong className="text-fg">Ask &amp; export.</strong> Query the data in plain English, then filter, sort, and download any slice as CSV.</li>
+          <li><strong className="text-fg">Ask &amp; export.</strong> Query the data in plain English — from the inline box or the movable floating chat — then filter, sort, and download any slice as CSV.</li>
         </ol>
       </section>
 
@@ -276,13 +277,22 @@ export default function DocumentationPage() {
             </p>
           </div>
           <div className="rounded-xl border border-border bg-panel/50 p-4">
-            <p className="font-medium text-fg">5 · &ldquo;Ask the data&rdquo; — an honest note</p>
+            <p className="font-medium text-fg">5 · &ldquo;Ask the data&rdquo; — a live LLM router, computing from data</p>
             <p className="mt-1 text-fg-muted">
-              The in-page <em>Ask the data</em> box runs a <strong>local, deterministic
-              query engine</strong> over the datasets — it does <em>not</em> call a live
-              LLM at runtime (the site is a static export). AI helped design that
-              engine; the answers themselves are computed straight from the data,
-              which keeps them accurate and reproducible.
+              Both the in-page <em>Ask the data</em> box and the floating chat
+              use the same hybrid design. Every question is sent to a{" "}
+              <strong>live language model</strong> running behind a small
+              serverless router, which does <em>one</em> job — it maps your
+              free-text phrasing to a <strong>structured query</strong> (which
+              measure, highest/lowest, or a named country). The model never
+              produces a figure, a fact, or a country of its own. A{" "}
+              <strong>local, deterministic engine</strong> then computes the
+              answer straight from the datasets, so every number stays sourced
+              and reproducible — <em>the AI interprets, the data answers.</em> The
+              router validates the model&rsquo;s output against a fixed list of
+              metrics before trusting it, and if the model is ever slow or
+              unavailable the box falls back to an on-device parser and still
+              works — offline and all.
             </p>
           </div>
           <div className="rounded-xl border border-border bg-panel/50 p-4">
