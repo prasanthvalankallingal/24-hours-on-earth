@@ -7,8 +7,17 @@
 // Claude layer can rewrite these same facts more fluidly, but the answer is
 // always grounded in the numbers here.
 
-import type { CountryTimeUse, CountryMetrics } from "./types";
-import { METRICS, type MetricDef } from "./types";
+import type { CountryTimeUse, CountryMetrics, Metric } from "./types";
+import { METRICS, METRIC_BY_KEY, type MetricDef } from "./types";
+
+/** A pre-parsed query from the optional language-router layer. It only says
+    WHICH metric/direction/country to look at — never any figure. ask() computes
+    the numbers exactly as it does for a locally-parsed question. */
+export interface AskHint {
+  metric: Metric;
+  direction: "highest" | "lowest" | "lookup";
+  country?: string;
+}
 
 export interface AskAnswer {
   /** Prose summary shown above the table. Computed from the real numbers —
@@ -122,8 +131,10 @@ export function ask(
   q: string,
   timeuse: CountryTimeUse[],
   metrics: CountryMetrics[],
+  hint?: AskHint,
 ): AskAnswer {
-  const def = findMetric(q);
+  // With a router hint we know the metric directly; otherwise parse the text.
+  const def = hint ? METRIC_BY_KEY[hint.metric] ?? null : findMetric(q);
   if (!def) {
     return {
       text:
@@ -136,11 +147,26 @@ export function ask(
 
   const sorted = [...rows].sort((a, b) => b.value - a.value);
   const lower = q.toLowerCase();
-  const wantsLow = /(least|lowest|shortest|fewest|less|bottom|smallest)/.test(lower);
-  const wantsHigh = /(most|highest|longest|top|greatest|biggest|largest)/.test(lower);
 
-  // country-specific lookup
-  const country = findCountry(q, rows);
+  // Direction + country come from the hint when the router supplied one,
+  // otherwise from parsing the question text. The compute below is identical.
+  let wantsLow: boolean;
+  let wantsHigh: boolean;
+  let country: Row | null;
+  if (hint) {
+    wantsLow = hint.direction === "lowest";
+    wantsHigh = hint.direction === "highest";
+    country =
+      hint.direction === "lookup" && hint.country
+        ? rows.find((r) => r.country.toLowerCase() === hint.country!.toLowerCase()) ??
+          rows.find((r) => r.code.toLowerCase() === hint.country!.toLowerCase()) ??
+          findCountry(hint.country, rows)
+        : null;
+  } else {
+    wantsLow = /(least|lowest|shortest|fewest|less|bottom|smallest)/.test(lower);
+    wantsHigh = /(most|highest|longest|top|greatest|biggest|largest)/.test(lower);
+    country = findCountry(q, rows);
+  }
   if (country && !wantsLow && !wantsHigh) {
     const rank = sorted.findIndex((r) => r.code === country.code) + 1;
     return {

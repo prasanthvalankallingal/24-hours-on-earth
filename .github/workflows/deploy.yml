@@ -32,6 +32,10 @@ jobs:
         env:
           # GitHub Pages serves under /<repo-name>/ — must match the repo exactly.
           NEXT_PUBLIC_BASE_PATH: /24-hours-on-earth
+          # Public serverless router that interprets "Ask the data" questions into
+          # structured queries. Public endpoint (no secret) — the API key lives
+          # only as a Cloudflare Worker secret. Unset ⇒ the box uses the local parser.
+          NEXT_PUBLIC_ROUTER_URL: https://ask-the-data-router.prasanth-vs.workers.dev
         run: npm run build
       - name: Disable Jekyll (keep _next folder)
         run: touch out/.nojekyll

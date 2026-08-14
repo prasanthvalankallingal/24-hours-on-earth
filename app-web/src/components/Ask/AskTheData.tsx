@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import type { CountryTimeUse, CountryMetrics } from "@/lib/types";
 import { ask, SUGGESTIONS, type AskAnswer } from "@/lib/ask";
+import { route } from "@/lib/router";
 
 interface Props {
   timeuse: CountryTimeUse[];
@@ -14,10 +15,17 @@ interface Props {
 export default function AskTheData({ timeuse, metrics }: Props) {
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState<AskAnswer | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const run = (question: string) => {
+  const run = async (question: string) => {
     setQ(question);
-    setAnswer(ask(question, timeuse, metrics));
+    setLoading(true);
+    // The router only interprets the phrasing into {metric, direction, country};
+    // ask() computes every figure from the local data. If the router is
+    // unavailable, hint is null and ask() parses the text itself — same numbers.
+    const hint = await route(question);
+    setAnswer(ask(question, timeuse, metrics, hint ?? undefined));
+    setLoading(false);
   };
 
   return (
@@ -41,9 +49,10 @@ export default function AskTheData({ timeuse, metrics }: Props) {
         />
         <button
           type="submit"
-          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-accent"
+          disabled={loading}
+          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
         >
-          Ask
+          {loading ? "…" : "Ask"}
         </button>
       </form>
 
