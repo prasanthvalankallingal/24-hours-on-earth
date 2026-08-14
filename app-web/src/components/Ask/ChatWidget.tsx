@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CountryTimeUse, CountryMetrics } from "@/lib/types";
-import { ask, SUGGESTIONS, type AskAnswer } from "@/lib/ask";
+import { ask, DECLINE_ANSWER, SUGGESTIONS, type AskAnswer } from "@/lib/ask";
 import { route } from "@/lib/router";
 
 interface Props {
@@ -98,9 +98,15 @@ export default function ChatWidget({ timeuse, metrics }: Props) {
     setQ("");
     setTurns((t) => [...t, { role: "user", text: trimmed }]);
     setLoading(true);
-    // Router only interprets; ask() computes the numbers. hint===null → local parse.
-    const hint = await route(trimmed);
-    const answer = ask(trimmed, timeuse, metrics, hint ?? undefined);
+    // Router only interprets; ask() computes the numbers. A deliberate decline
+    // shows guidance (no local parse); only an unavailable router falls back.
+    const r = await route(trimmed);
+    const answer =
+      r.kind === "hint"
+        ? ask(trimmed, timeuse, metrics, r.hint)
+        : r.kind === "decline"
+          ? DECLINE_ANSWER
+          : ask(trimmed, timeuse, metrics);
     setTurns((t) => [...t, { role: "bot", answer }]);
     setLoading(false);
   };

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import type { CountryTimeUse, CountryMetrics } from "@/lib/types";
-import { ask, SUGGESTIONS, type AskAnswer } from "@/lib/ask";
+import { ask, DECLINE_ANSWER, SUGGESTIONS, type AskAnswer } from "@/lib/ask";
 import { route } from "@/lib/router";
 
 interface Props {
@@ -21,10 +21,16 @@ export default function AskTheData({ timeuse, metrics }: Props) {
     setQ(question);
     setLoading(true);
     // The router only interprets the phrasing into {metric, direction, country};
-    // ask() computes every figure from the local data. If the router is
-    // unavailable, hint is null and ask() parses the text itself — same numbers.
-    const hint = await route(question);
-    setAnswer(ask(question, timeuse, metrics, hint ?? undefined));
+    // ask() computes every figure from the local data. A deliberate decline
+    // shows guidance; only an unavailable router falls back to local parsing.
+    const r = await route(question);
+    setAnswer(
+      r.kind === "hint"
+        ? ask(question, timeuse, metrics, r.hint)
+        : r.kind === "decline"
+          ? DECLINE_ANSWER
+          : ask(question, timeuse, metrics),
+    );
     setLoading(false);
   };
 

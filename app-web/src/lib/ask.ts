@@ -34,6 +34,15 @@ interface Row {
   value: number;
 }
 
+/** Shown when we can't map a question to a single measure — either the router
+    deliberately declined (off-topic / a day-composition or time-of-day question
+    the engine can't rank) or no metric was found locally. One source of truth so
+    both paths read the same. */
+export const DECLINE_ANSWER: AskAnswer = {
+  text:
+    "I can answer questions about a single measure — work, leisure, commute, calories, meat, vegetables, births, deaths, life expectancy, fertility, happiness, or internet use — either ranked across countries or looked up for one country. I can't say what people are doing at a particular time of day, or break down how a whole day is divided. Try “Which country has the most leisure time?” or “What does Japan eat?”",
+};
+
 function metricRows(
   def: MetricDef,
   timeuse: CountryTimeUse[],
@@ -72,6 +81,15 @@ const METRIC_TERMS: { key: string; terms: string[] }[] = [
   { key: "internet", terms: ["internet", "online", "connected", "web", "digital", "connectivity"] },
 ];
 
+// Very common English words that must never fuzzy-match a metric term — they
+// cause false positives (e.g. "doing" → "dying" → deaths). Exact and stem
+// matches are unaffected; only the typo-tolerant pass skips these.
+const COMMON_WORDS = new Set([
+  "doing", "going", "being", "does", "done", "most", "mostly", "more",
+  "people", "during", "night", "time", "daytime", "what", "when", "them",
+  "they", "their", "there", "here", "have", "having",
+]);
+
 // Levenshtein distance (bounded) — catches typos like "happyness" or "werk".
 function editDistance(a: string, b: string): number {
   if (Math.abs(a.length - b.length) > 2) return 99;
@@ -109,11 +127,13 @@ function findMetric(q: string): MetricDef | null {
       }
     }
 
-  // Pass 3: fuzzy — tolerate typos within edit distance 1–2.
+  // Pass 3: fuzzy — tolerate typos within edit distance 1–2, but never for
+  // common words (so "doing" can't slip to "dying").
   for (const { key, terms } of METRIC_TERMS)
     for (const t of terms) {
       if (t.includes(" ") || t.length < 4) continue;
       for (const w of words) {
+        if (COMMON_WORDS.has(w)) continue;
         if (w.length >= 4 && editDistance(w, t) <= (t.length > 6 ? 2 : 1))
           return METRICS.find((m) => m.key === key) ?? null;
       }
@@ -135,12 +155,7 @@ export function ask(
 ): AskAnswer {
   // With a router hint we know the metric directly; otherwise parse the text.
   const def = hint ? METRIC_BY_KEY[hint.metric] ?? null : findMetric(q);
-  if (!def) {
-    return {
-      text:
-        "I can answer questions about how the world spends its day — try asking about work, leisure, commute, calories, births, life expectancy, happiness, and more. For example: “Which country works the most?”",
-    };
-  }
+  if (!def) return DECLINE_ANSWER;
 
   const rows = metricRows(def, timeuse, metrics);
   if (!rows.length) return { text: `I don't have ${def.label.toLowerCase()} data loaded.` };

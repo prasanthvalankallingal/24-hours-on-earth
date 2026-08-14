@@ -3,12 +3,23 @@
 // country?} that ask() executes deterministically. The router only interprets
 // the question — it never returns figures.
 //
-// Every failure path (no URL configured, network error, timeout, malformed
-// response) resolves to null so the caller falls back to the local parser. The
-// Ask box therefore works with or without the Worker.
+// route() returns a discriminated result so the caller can tell three cases
+// apart:
+//   • "hint"     — the router mapped the question to a metric/direction/country.
+//   • "decline"  — the router was reachable but deliberately returned no hint
+//                  (off-topic, or a question the engine can't answer, e.g. "what
+//                  do people do at night"). The caller shows guidance and MUST
+//                  NOT fall back to the local parser (which could mis-match).
+//   • "fallback" — no URL configured, network error, timeout, or a server error.
+//                  The caller parses the text locally, so the box still works.
 
 import type { AskHint } from "./ask";
 import type { Metric } from "./types";
+
+export type RouteResult =
+  | { kind: "hint"; hint: AskHint }
+  | { kind: "decline" }
+  | { kind: "fallback" };
 
 const ROUTER_URL = process.env.NEXT_PUBLIC_ROUTER_URL || "";
 
@@ -29,8 +40,9 @@ function isHint(x: unknown): x is AskHint {
   );
 }
 
-export async function route(question: string): Promise<AskHint | null> {
-  if (!ROUTER_URL) return null;
+export async function route(question: string): Promise<RouteResult> {
+  // No router configured (e.g. a build without the URL) → parse locally.
+  if (!ROUTER_URL) return { kind: "fallback" };
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 9000);
@@ -41,11 +53,16 @@ export async function route(question: string): Promise<AskHint | null> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
     });
-    if (!res.ok) return null;
+    // A server error means the router is effectively unavailable → local parse.
+    if (!res.ok) return { kind: "fallback" };
     const data = (await res.json()) as { hint?: unknown };
-    return isHint(data?.hint) ? data.hint : null;
+    if (isHint(data?.hint)) return { kind: "hint", hint: data.hint };
+    // Reachable but no usable hint = a deliberate decline. Respect it — do not
+    // fall back to the local parser, which could mis-match the phrasing.
+    return { kind: "decline" };
   } catch {
-    return null;
+    // Network error or timeout → the box still answers via the local parser.
+    return { kind: "fallback" };
   } finally {
     clearTimeout(timer);
   }
