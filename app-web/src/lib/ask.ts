@@ -43,6 +43,53 @@ export const DECLINE_ANSWER: AskAnswer = {
     "I can answer questions about a single measure — work, leisure, commute, calories, meat, vegetables, births, deaths, life expectancy, fertility, happiness, or internet use — either ranked across countries or looked up for one country. I can't say what people are doing at a particular time of day, or break down how a whole day is divided. Try “Which country has the most leisure time?” or “What does Japan eat?”",
 };
 
+/** The whole-day COMPOSITION answer, for "what do people do all day / at night /
+    how is a day divided" questions the ranking engine can't otherwise handle.
+    It mirrors the site's RadialClock exactly — Work (derived from annual hours)
+    + Leisure (measured) + the honest remainder "Sleep & personal" (everything
+    else, NOT pure sleep) — computed as the mean of national averages across the
+    time-use countries, the same averaging the World-average clock uses. Every
+    figure is read straight from the timeuse data; none is invented. */
+export function averageDay(timeuse: CountryTimeUse[]): AskAnswer {
+  const hm = METRIC_BY_KEY.work.fmt; // "Xh Ym"
+  const mean = (get: (d: CountryTimeUse) => number | null) => {
+    const v = timeuse.map(get).filter((x): x is number => x != null);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0;
+  };
+  const work = mean((d) => d.workMin);
+  const leisure = mean((d) => d.leisureMin);
+  const remainder = Math.max(0, 1440 - work - leisure);
+  const n = timeuse.filter((d) => d.leisureMin != null || d.workMin != null).length;
+
+  return {
+    writeup:
+      `I track one measure at a time, so I can't say what people are doing at a specific hour — but here's how a whole day divides on average. ` +
+      `Across the ${n} countries with time-use survey data, a typical 24 hours splits into about ${hm(work)} of paid work, ${hm(leisure)} of leisure, and ${hm(remainder)} for sleep and everything else — eating, chores, and personal care. ` +
+      `Work is derived from annual working hours and leisure from time-use surveys; the remainder isn't pure sleep, and it's an average of national averages, so no single day looks exactly like it.`,
+    text: "An average 24-hour day (mean of national averages):",
+    rows: [
+      { label: "Work (derived)", value: hm(work) },
+      { label: "Leisure", value: hm(leisure) },
+      { label: "Sleep & personal", value: hm(remainder) },
+    ],
+  };
+}
+
+// A question about the whole day's shape, or what people do at a time of day —
+// which the single-measure engine can't rank but averageDay() can describe. Used
+// only on the local fallback path (the router flags these directly). It's checked
+// only after no single metric matched, so it can't shadow a real metric question.
+function isComposition(q: string): boolean {
+  const s = ` ${q.toLowerCase()} `;
+  return (
+    /(all day|whole day|entire day|typical day|average day|their day|a day)/.test(s) ||
+    /day\s*time|night\s*time|at night|in the day|during the (day|night)/.test(s) ||
+    /(spend|spends|spent).{0,20}(day|time)/.test(s) ||
+    /(what|how).{0,30}(people|they|humans|everyone).{0,20}(do|doing|spend)/.test(s) ||
+    /(day|time).{0,20}(divided|broken down|breakdown|split)/.test(s)
+  );
+}
+
 function metricRows(
   def: MetricDef,
   timeuse: CountryTimeUse[],
@@ -155,7 +202,12 @@ export function ask(
 ): AskAnswer {
   // With a router hint we know the metric directly; otherwise parse the text.
   const def = hint ? METRIC_BY_KEY[hint.metric] ?? null : findMetric(q);
-  if (!def) return DECLINE_ANSWER;
+  if (!def) {
+    // No single measure matched. On the local path a whole-day / time-of-day
+    // question gets the honest average-day composition; otherwise, guidance.
+    if (!hint && isComposition(q)) return averageDay(timeuse);
+    return DECLINE_ANSWER;
+  }
 
   const rows = metricRows(def, timeuse, metrics);
   if (!rows.length) return { text: `I don't have ${def.label.toLowerCase()} data loaded.` };

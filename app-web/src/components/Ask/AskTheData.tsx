@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import type { CountryTimeUse, CountryMetrics } from "@/lib/types";
-import { ask, DECLINE_ANSWER, SUGGESTIONS, type AskAnswer } from "@/lib/ask";
+import { ask, averageDay, DECLINE_ANSWER, SUGGESTIONS, type AskAnswer } from "@/lib/ask";
 import { route } from "@/lib/router";
 
 interface Props {
@@ -21,15 +21,18 @@ export default function AskTheData({ timeuse, metrics }: Props) {
     setQ(question);
     setLoading(true);
     // The router only interprets the phrasing into {metric, direction, country};
-    // ask() computes every figure from the local data. A deliberate decline
-    // shows guidance; only an unavailable router falls back to local parsing.
+    // ask()/averageDay() compute every figure from the local data. A whole-day
+    // question gets the average-day breakdown, a deliberate decline shows
+    // guidance, and only an unavailable router falls back to local parsing.
     const r = await route(question);
     setAnswer(
       r.kind === "hint"
         ? ask(question, timeuse, metrics, r.hint)
-        : r.kind === "decline"
-          ? DECLINE_ANSWER
-          : ask(question, timeuse, metrics),
+        : r.kind === "composition"
+          ? averageDay(timeuse)
+          : r.kind === "decline"
+            ? DECLINE_ANSWER
+            : ask(question, timeuse, metrics),
     );
     setLoading(false);
   };

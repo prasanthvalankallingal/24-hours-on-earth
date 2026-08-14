@@ -5,19 +5,23 @@
 //
 // route() returns a discriminated result so the caller can tell three cases
 // apart:
-//   • "hint"     — the router mapped the question to a metric/direction/country.
-//   • "decline"  — the router was reachable but deliberately returned no hint
-//                  (off-topic, or a question the engine can't answer, e.g. "what
-//                  do people do at night"). The caller shows guidance and MUST
-//                  NOT fall back to the local parser (which could mis-match).
-//   • "fallback" — no URL configured, network error, timeout, or a server error.
-//                  The caller parses the text locally, so the box still works.
+//   • "hint"        — the router mapped the question to a metric/direction/country.
+//   • "composition" — a whole-day / time-of-day question ("what do people do all
+//                     day", "…at night"). The caller shows the honest average-day
+//                     breakdown (averageDay()) instead of a single-measure answer.
+//   • "decline"     — the router was reachable but returned neither a hint nor a
+//                     composition intent (genuinely off-topic / a trend over time).
+//                     The caller shows guidance and MUST NOT fall back to the local
+//                     parser (which could mis-match the phrasing).
+//   • "fallback"    — no URL configured, network error, timeout, or a server error.
+//                     The caller parses the text locally, so the box still works.
 
 import type { AskHint } from "./ask";
 import type { Metric } from "./types";
 
 export type RouteResult =
   | { kind: "hint"; hint: AskHint }
+  | { kind: "composition" }
   | { kind: "decline" }
   | { kind: "fallback" };
 
@@ -55,8 +59,11 @@ export async function route(question: string): Promise<RouteResult> {
     });
     // A server error means the router is effectively unavailable → local parse.
     if (!res.ok) return { kind: "fallback" };
-    const data = (await res.json()) as { hint?: unknown };
+    const data = (await res.json()) as { hint?: unknown; intent?: unknown };
     if (isHint(data?.hint)) return { kind: "hint", hint: data.hint };
+    // The router recognised a whole-day / time-of-day question the ranking
+    // engine can't answer, but the average-day breakdown can.
+    if (data?.intent === "average_day") return { kind: "composition" };
     // Reachable but no usable hint = a deliberate decline. Respect it — do not
     // fall back to the local parser, which could mis-match the phrasing.
     return { kind: "decline" };
