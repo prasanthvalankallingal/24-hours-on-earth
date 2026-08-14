@@ -28,7 +28,8 @@ Rules:
 - If the user names a specific country, you MUST use direction "lookup" with that country and the single best-fitting metric. NEVER return a global ranking, and NEVER skip the tool, when a country is named. (So "what does Japan eat most" → the best single food metric for Japan, looked up.)
 - Choose the SINGLE best-fitting metric. For generic eating / food / diet / "eats the most" with no specific food named, use "calories". Use "meat" or "vegetables" ONLY when the user explicitly names meat or vegetables.
 - With no country named, use direction "highest" or "lowest" to rank all countries by the best-fitting metric.
-- Only skip the tool (do not call it) when the question is off-topic, has no matching metric, or asks for a change/trend over time — none of which the engine supports.`;
+- Some questions ask for the overall COMPOSITION or BREAKDOWN of a typical day rather than one measure — e.g. "what do people do all day", "how do people spend their day", "what do people do most during the day", "what does a typical day look like". The engine can only rank or look up ONE measure; it cannot describe how a whole day is divided across activities. For that kind of question, do NOT call the tool.
+- Only skip the tool (do not call it) when the question is off-topic, asks for a day's overall breakdown/composition (above), has no single matching measure, or asks for a change/trend over time — none of which the engine supports.`;
 
 const TOOL = {
   type: "function",
