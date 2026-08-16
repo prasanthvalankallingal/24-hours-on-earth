@@ -106,8 +106,31 @@ body {
 .cosmos {
   position: relative;
   z-index: 0;
+  /* Base = only the flat deep-space gradient. It stays static and carries NO
+     transform on purpose: a transform on .cosmos would become the containing
+     block for the floating chat's position:fixed launcher and break it. Every
+     moving element (planets/nebula on .cosmos-deep, stars on the pseudo-elements)
+     is a separate GPU-composited layer instead — cheap, and it never competes
+     with the globe's WebGL load. */
+  background: linear-gradient(180deg, #04060d 0%, #070a16 45%, #04060d 100%);
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+/* Distant cosmos: three planet discs, nebula tints and the faint Milky-Way band.
+   A separate fixed layer (rendered as a <div> child of .cosmos, a sibling of the
+   content — never an ancestor of the fixed ChatWidget) so it can drift on a GPU
+   transform freely. z-index:-3 sits it behind both starfields (the planets are
+   the farthest things in the sky). Oversized via inset so the drift never exposes
+   an edge; no opacity twinkle here — planets shouldn't pulse. */
+.cosmos-deep {
+  content: "";
+  position: fixed;
+  inset: -15%;
+  z-index: -3;
+  pointer-events: none;
   background:
-    /* --- three distant planets (soft lit discs; fixed px radii survive `cover`) --- */
+    /* --- three distant planets (soft lit discs) --- */
     radial-gradient(20px 20px at 15.4% 20.6%, #d9c7ff 0%, #9f82e6 42%, #6a4bb0 74%, rgba(106,75,176,0) 80%),
     radial-gradient(32px 32px at 84% 82%, #ffd9a8 0%, #e0a05a 44%, #a5602a 76%, rgba(165,96,42,0) 82%),
     radial-gradient(11px 11px at 71% 41%, #bfeee0 0%, #66c3ac 50%, #2f7f6a 82%, rgba(47,127,106,0) 88%),
@@ -116,11 +139,19 @@ body {
     /* --- nebula tints --- */
     radial-gradient(1200px 800px at 78% 8%, rgba(110,168,255,0.12), transparent 60%),
     radial-gradient(1000px 900px at 12% 30%, rgba(185,140,255,0.11), transparent 60%),
-    radial-gradient(900px 700px at 60% 95%, rgba(79,209,161,0.07), transparent 60%),
-    /* --- deep-space base --- */
-    linear-gradient(180deg, #04060d 0%, #070a16 45%, #04060d 100%);
-  background-attachment: fixed;
+    radial-gradient(900px 700px at 60% 95%, rgba(79,209,161,0.07), transparent 60%);
+  background-repeat: no-repeat;
   background-size: cover;
+  /* Slowest drift of all the layers — the planets are the most distant, so they
+     glide the least. Linear (constant velocity, never decelerates to a "frozen"
+     stop) and a gentle sway via `alternate` — planets don't tile, so they can't
+     one-tile-loop; the sway stays inside the oversized box, no edge, no teleport. */
+  animation: drift-deep 90s linear infinite alternate;
+}
+
+@keyframes drift-deep {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-70px, 45px, 0); }
 }
 
 /* Dense, tiled starfield. Each layer is one star repeated on a differently-sized
@@ -129,7 +160,8 @@ body {
 .cosmos::before {
   content: "";
   position: fixed;
-  inset: 0;
+  /* Oversized so the drift never exposes an edge of the tiled field. */
+  inset: -20%;
   z-index: -1;
   pointer-events: none;
   background-image:
@@ -145,7 +177,16 @@ body {
     200px 200px, 170px 170px, 250px 250px, 150px 150px,
     300px 300px, 220px 220px, 280px 280px, 190px 190px;
   background-repeat: repeat;
-  animation: twinkle 5.5s ease-in-out infinite;
+  /* Twinkle (opacity pulse) + a constant-velocity drift so the near stars glide
+     past — the universe is moving every moment. The drift is a GPU-composited
+     `transform` (not background-position), so it runs on the compositor thread
+     and never triggers a main-thread repaint that would compete with the globe's
+     WebGL load. This is a *scatter* field (8 mismatched tile sizes) so it can't
+     tile-loop; it sways within the oversized box via `alternate`. Crucially the
+     timing is `linear`, NOT ease-in-out: an eased sway decelerates to a dead stop
+     at each turnaround, which reads as "the background froze." Linear keeps a
+     steady speed right up to an instantaneous, imperceptible direction flip. */
+  animation: twinkle 5.5s ease-in-out infinite, drift-near 48s linear infinite alternate;
 }
 
 @keyframes twinkle {
@@ -153,8 +194,64 @@ body {
   50%      { opacity: 1; }
 }
 
-/* Daytime sky has no stars — hide the field in light mode. */
-html.light .cosmos::before { display: none; }
+/* Near starfield sways down-and-left; the far field (below) drifts straight and
+   slower, so the two layers separate into depth — parallax through space. */
+@keyframes drift-near {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-150px, -110px, 0); }
+}
+
+/* A second, deeper starfield: dimmer, sparser, on one uniform 360px grid so its
+   drift loops perfectly seamlessly (it moves by an exact whole number of tiles).
+   z-index:-2 sets it behind the near field; the oversized box means the drift
+   never exposes an edge. This is the layer that most reads as "moving through
+   the cosmos." */
+.cosmos::after {
+  content: "";
+  position: fixed;
+  inset: -40%;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0.8;
+  /* Eight stars on one uniform 360px grid — denser and brighter than before so
+     the drift is actually legible (the old four faint dots at 0.55 opacity were
+     the reason the sky looked static). All positions sit inside the 360px tile so
+     the field loops perfectly when translated by exactly one tile. */
+  background-image:
+    radial-gradient(1.2px 1.2px at 40px 60px, #ffffffdd, transparent),
+    radial-gradient(1.5px 1.5px at 190px 210px, #cfe0ffcc, transparent),
+    radial-gradient(1.2px 1.2px at 300px 120px, #ffffffcc, transparent),
+    radial-gradient(1.3px 1.3px at 110px 300px, #ffe9c8cc, transparent),
+    radial-gradient(1px 1px at 250px 40px, #ffffffbb, transparent),
+    radial-gradient(1.4px 1.4px at 60px 250px, #dfe9ffcc, transparent),
+    radial-gradient(1px 1px at 330px 320px, #ffffffbb, transparent),
+    radial-gradient(1.2px 1.2px at 150px 130px, #fff3d8cc, transparent);
+  background-size:
+    360px 360px, 360px 360px, 360px 360px, 360px 360px,
+    360px 360px, 360px 360px, 360px 360px, 360px 360px;
+  background-repeat: repeat;
+  /* Faster (80s vs 140s) and continuous: this is the layer that reads as
+     "drifting through space." Linear + one-tile translate = seamless, never-
+     stopping loop. */
+  animation: drift-far 80s linear infinite, twinkle-far 9s ease-in-out infinite;
+}
+
+/* Drift by exactly one whole tile (360px) on the uniform grid, so the loop is
+   seamless. A GPU `transform` (not background-position) keeps it off the main
+   thread — no repaint pressure while the globe initialises. */
+@keyframes drift-far {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, 360px, 0); }
+}
+
+@keyframes twinkle-far {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.65; }
+}
+
+/* Daytime sky has no stars — hide both fields in light mode. */
+html.light .cosmos::before,
+html.light .cosmos::after { display: none; }
 
 /* Daytime version of the same backdrop — a bright open sky: a warm sun disc with
    a soft halo top-right (echoing the amber "on Earth"), a few drifting clouds,
@@ -162,15 +259,9 @@ html.light .cosmos::before { display: none; }
    like the night theme. */
 html.light .cosmos {
   background:
-    /* --- the sun: a bright core with a warm halo --- */
+    /* --- the sun: a bright core with a warm halo (stays fixed) --- */
     radial-gradient(46px 46px at 83% 12%, #fffdf5 0%, #fff1c8 46%, #ffe19a 72%, rgba(255,225,154,0) 100%),
     radial-gradient(560px 560px at 83% 12%, rgba(255,214,150,0.55), rgba(255,224,170,0.22) 40%, transparent 68%),
-    /* --- soft clouds (blurred white puffs) --- */
-    radial-gradient(220px 90px at 22% 34%, rgba(255,255,255,0.92), rgba(255,255,255,0) 72%),
-    radial-gradient(300px 110px at 30% 30%, rgba(255,255,255,0.75), rgba(255,255,255,0) 74%),
-    radial-gradient(200px 80px at 68% 62%, rgba(255,255,255,0.80), rgba(255,255,255,0) 72%),
-    radial-gradient(260px 95px at 74% 66%, rgba(255,255,255,0.62), rgba(255,255,255,0) 74%),
-    radial-gradient(170px 70px at 12% 74%, rgba(255,255,255,0.70), rgba(255,255,255,0) 72%),
     /* --- sky depth tints --- */
     radial-gradient(1000px 900px at 10% 26%, rgba(120,170,255,0.20), transparent 60%),
     radial-gradient(900px 760px at 58% 100%, rgba(150,200,255,0.22), transparent 60%),
@@ -178,6 +269,28 @@ html.light .cosmos {
     linear-gradient(180deg, #cfe4ff 0%, #dcebff 40%, #eaf2ff 74%, #eef4fc 100%);
   background-attachment: fixed;
   background-size: cover;
+  /* Clouds moved to the drifting .cosmos-deep layer below so they sail across the
+     sky (a transform on .cosmos would break the fixed ChatWidget). */
+}
+
+/* Daytime: reuse the distant-drift layer to carry the clouds so they sail
+   horizontally across the sky. Its dark-mode planet background and vertical
+   drift are both overridden here. */
+html.light .cosmos-deep {
+  background:
+    radial-gradient(220px 90px at 22% 34%, rgba(255,255,255,0.92), rgba(255,255,255,0) 72%),
+    radial-gradient(300px 110px at 30% 30%, rgba(255,255,255,0.75), rgba(255,255,255,0) 74%),
+    radial-gradient(200px 80px at 68% 62%, rgba(255,255,255,0.80), rgba(255,255,255,0) 72%),
+    radial-gradient(260px 95px at 74% 66%, rgba(255,255,255,0.62), rgba(255,255,255,0) 74%),
+    radial-gradient(170px 70px at 12% 74%, rgba(255,255,255,0.70), rgba(255,255,255,0) 72%);
+  background-repeat: no-repeat;
+  background-size: cover;
+  animation: drift-clouds 75s linear infinite alternate;
+}
+
+@keyframes drift-clouds {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(90px, -12px, 0); }
 }
 
 /* keep old class working as an alias */

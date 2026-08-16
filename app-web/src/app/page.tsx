@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { GlobeMode } from "@/components/Globe/EarthGlobe";
 import MetricBar from "@/components/Controls/MetricBar";
@@ -19,18 +18,21 @@ import { METRIC_BY_KEY } from "@/lib/types";
 import { CITY_GLOW } from "@/lib/colors";
 import { computeWorldStats, worldStory, countryStory } from "@/lib/story";
 
-// Client-only: three / react-globe.gl must never load during prerender.
-const EarthGlobe = dynamic(() => import("@/components/Globe/EarthGlobe"), {
-  ssr: false,
-  loading: () => (
+// Client-only globe loading fallback (three / react-globe.gl must never load
+// during prerender). The component itself is imported imperatively on the
+// client via useEffect (see below) rather than next/dynamic, so it mounts on a
+// guaranteed post-hydration re-render instead of a Suspense boundary that could
+// stay on this fallback until an unrelated click.
+function GlobeFallback() {
+  return (
     <div className="flex h-full w-full items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-fg-muted">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" />
         <span className="text-xs tracking-wide">Loading the world…</span>
       </div>
     </div>
-  ),
-});
+  );
+}
 import type {
   Metric,
   Gender,
@@ -59,6 +61,19 @@ export default function Home() {
   const [mode, setMode] = useState<GlobeMode>("data");
   const [selected, setSelected] = useState<string | null>(null);
   const [zoom, setZoom] = useState(0); // 0 out … 1 in — dims/shrinks panels
+
+  // Load the WebGL globe on the client after mount. useEffect always runs
+  // post-hydration and its setState forces the re-render that shows the globe —
+  // avoiding the next/dynamic Suspense fallback that could otherwise stay on
+  // "Loading the world…" until an unrelated interaction.
+  const [EarthGlobe, setEarthGlobe] = useState<any>(null);
+  useEffect(() => {
+    let alive = true;
+    import("@/components/Globe/EarthGlobe").then((m) => {
+      if (alive) setEarthGlobe(() => m.default);
+    });
+    return () => { alive = false; };
+  }, []);
 
   // As the user zooms in, fade + shrink the overlay panels so they liquify out
   // of the way of the globe. Clamped so they never fully vanish or shrink away.
@@ -201,6 +216,11 @@ export default function Home() {
 
   return (
     <main className="cosmos relative flex-1">
+      {/* Distant cosmos — planets, nebula tints and the Milky-Way band. Its own
+          fixed layer (a sibling of the content, NOT an ancestor of the fixed
+          ChatWidget) so it can drift on a GPU transform without becoming that
+          widget's containing block. Slowest layer = farthest depth. */}
+      <div className="cosmos-deep" aria-hidden="true" />
       {/* HERO */}
       <section
         className="relative h-screen w-full overflow-hidden"
@@ -211,18 +231,22 @@ export default function Home() {
         }
       >
         <div className="absolute inset-0">
-          <EarthGlobe
-            timeuse={timeuse}
-            working={working}
-            metrics={metrics}
-            cities={cities}
-            metric={metric}
-            gender={gender}
-            mode={mode}
-            selected={selected}
-            onSelect={setSelected}
-            onZoom={setZoom}
-          />
+          {EarthGlobe ? (
+            <EarthGlobe
+              timeuse={timeuse}
+              working={working}
+              metrics={metrics}
+              cities={cities}
+              metric={metric}
+              gender={gender}
+              mode={mode}
+              selected={selected}
+              onSelect={setSelected}
+              onZoom={setZoom}
+            />
+          ) : (
+            <GlobeFallback />
+          )}
         </div>
 
         {/* Title + live narrative hook */}

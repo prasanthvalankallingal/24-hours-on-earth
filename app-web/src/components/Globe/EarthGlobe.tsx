@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type {
   CountryTimeUse,
@@ -14,19 +13,17 @@ import type {
 import { METRIC_BY_KEY } from "@/lib/types";
 import { rampColor, OCEAN, NO_DATA, CITY_GLOW } from "@/lib/colors";
 
-// react-globe.gl is WebGL/DOM-only — load client-side only, with a graceful
-// loading state so the hero never appears empty while the bundle/textures load.
-const Globe = dynamic(() => import("react-globe.gl"), {
-  ssr: false,
-  loading: () => (
+// Graceful loading state shown while the client-only globe module downloads.
+function GlobeFallback() {
+  return (
     <div className="flex h-full w-full items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-fg-muted">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" />
         <span className="text-xs tracking-wide">Loading the world…</span>
       </div>
     </div>
-  ),
-});
+  );
+}
 
 export type GlobeMode = "realistic" | "data";
 
@@ -72,6 +69,22 @@ export default function EarthGlobe(props: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [polygons, setPolygons] = useState<any[]>([]);
   const [size, setSize] = useState({ w: 800, h: 600 });
+
+  // react-globe.gl is WebGL/DOM-only, so it can't render on the server. Rather
+  // than a Suspense-based dynamic import (which could stay stuck on the loading
+  // fallback until an unrelated re-render — the "click a filter to reveal the
+  // globe" bug), load it imperatively here: useEffect always runs after the
+  // client mount, and its setState guarantees a re-render the moment the module
+  // resolves. `() => m.default` because setState treats a bare function as an
+  // updater, and the export is itself a component function.
+  const [Globe, setGlobe] = useState<any>(null);
+  useEffect(() => {
+    let alive = true;
+    import("react-globe.gl").then((m) => {
+      if (alive) setGlobe(() => m.default);
+    });
+    return () => { alive = false; };
+  }, []);
 
   const def = METRIC_BY_KEY[metric];
 
@@ -140,21 +153,24 @@ export default function EarthGlobe(props: Props) {
 
 
   // Controls: drag to rotate, scroll/pinch to zoom (within Earth-focused limits).
+  // Runs on mount (ref may be null → no-op) and re-applies on later prop changes;
+  // onGlobeReady also calls it the instant the globe instance exists.
+  const configureControls = useCallback(() => {
+    const controls = globeRef.current?.controls?.();
+    if (!controls) return;
+    controls.autoRotate = !selected;
+    controls.autoRotateSpeed = 0.35;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 0.8;
+    controls.minDistance = 180; // don't clip into the surface
+    controls.maxDistance = 500; // stay Earth-focused
+  }, [selected]);
+
   useEffect(() => {
-    const g = globeRef.current;
-    if (!g) return;
-    const controls = g.controls?.();
-    if (controls) {
-      controls.autoRotate = !selected;
-      controls.autoRotateSpeed = 0.35;
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.08;
-      controls.enableZoom = true;
-      controls.zoomSpeed = 0.8;
-      controls.minDistance = 180; // don't clip into the surface
-      controls.maxDistance = 500; // stay Earth-focused
-    }
-  }, [polygons, selected]);
+    configureControls();
+  }, [configureControls, polygons]);
 
   const nameToCode = useMemo(() => {
     const m = new Map<string, string>();
@@ -223,12 +239,26 @@ export default function EarthGlobe(props: Props) {
 
   return (
     <div ref={wrapRef} className="relative h-full w-full">
+      {!Globe ? (
+        <GlobeFallback />
+      ) : (
       <Globe
         ref={globeRef}
         width={size.w}
         height={size.h}
         backgroundColor="rgba(0,0,0,0)"
         globeMaterial={material}
+        // Fires when the globe instance is live. Kick the render loop, set an
+        // initial camera, and configure controls so the very first frame paints on
+        // its own — without this, the globe stayed blank until the first user
+        // interaction (e.g. a filter click) forced a redraw. All imperative here
+        // (no setState) since this fires during mount.
+        onGlobeReady={() => {
+          const g = globeRef.current;
+          g?.resumeAnimation?.();
+          g?.pointOfView?.({ lat: 20, lng: 0, altitude: 2.5 });
+          configureControls();
+        }}
         showGraticules={mode === "data"}
         showAtmosphere
         atmosphereColor="#6ea8ff"
@@ -278,6 +308,7 @@ export default function EarthGlobe(props: Props) {
         labelResolution={2}
         labelAltitude={0.01}
       />
+      )}
     </div>
   );
 }
